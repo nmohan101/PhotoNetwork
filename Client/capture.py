@@ -1,13 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Aug  7 20:37:40 2018
+#!/usr/bin/env python
 
-@author: nmohan
+"""capture.py: This application is on the client. It is the main process that applies
+               camera settings and takes captures. 
+
+__author__      = "Nitin Mohan
+__copyright__   = "Copy Right 2018. NM Technlogies"
 """
 
 #*********SYSTEM IMPORTS*********
 from picamera import PiCamera
 import datetime
+import argparse
 
 class Camera(object):
     
@@ -57,17 +60,31 @@ class Camera(object):
         self.camera.flash_mode = self.flash
         
 
-    def capture(self):
-        time_stamp = datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S")
-        self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))
+    def capture(self, captures):
         
-        print "Imaged saved to %s"%self.capture_path
+        for c in range(0, captures):
+            time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S"))
+            self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))
+            
+            print "Imaged saved to: %s/%s"%(self.capture_path, time_stamp)
 
 if __name__=="__main__":
     
+    #Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--capture', default=1, type = int, help = "Enter number of captures to be taken")
+    args = parser.parse_args()
+    captures = args.capture
     
+    #Intialize the camera object
     c = Camera()
+    
+    #Read file located in /var/pn/cam_settings
     c.read_cam_settings()
+    
+    #Apply camera settings to the camera
     c.camera_settings()
-    c.capture()
+    
+    #Send caommand to capture
+    c.capture(captures)
     
