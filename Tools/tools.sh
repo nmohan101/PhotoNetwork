@@ -2,7 +2,7 @@
 
 """tools.sh: Helper script
 
-__author__      = "Nitin Mohan
+__author__      = "Nitin Mohan"
 __copyright__   = "Copy Right 2018. NM Technlogies"
 """
 
