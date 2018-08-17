@@ -10,11 +10,13 @@ __copyright__   = "Copy Right 2018. NM Technlogies"
 
 #********System Imports************
 import socket
-import re
 from threading import Thread
+import json
+import datetime
 
 #********Local Imports************
 import AsyncTimer
+import getip
 
 #******Costants********************
 broadcast_port = 5560
@@ -29,12 +31,21 @@ class UDP(object):
         self.sock_m = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock_l = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.ip = ""
+        self.bc_msg_counter = 0
      
     def _broadcast(self):
         print "Sending broadcast message"
-        self.sock_b.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.hostname = socket.gethostname()
-        self.sock_b.sendto("HOST=%s"%self.hostname,('255.255.255.255',broadcast_port))
+        bcast_message = {"type": "host_broadcast", "total_bc": self.bc_msg_counter, "hostname": socket.gethostname(), "time": str(datetime.datetime.now())}
+        data = json.dumps(bcast_message)
+        try:
+            self.sock_b.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            self.sock_b.sendto(data, ('255.255.255.255',broadcast_port))
+            self.bc_msg_counter += 1
+        except(KeyboardInterrupt, SystemExit):
+            self.sock_b.shutdown
+            self.sock_m.shutdown
+            self.sock_l.shutdown
+            raise
 
     def _multicast(self):
         print "Sending multicast message"
@@ -53,17 +64,18 @@ def main(listen):
         while True:
             print "Waiting for data"
             data, port = listen.recvfrom(4096)
-            print data
-            print port
+            print json.loads(data)
     except(KeyboardInterrupt, SystemExit):
         raise
     
           
 if __name__== "__main__":
     u = UDP()
-    AsyncTimer.Async_Timer(15, u._broadcast).start()
+    AsyncTimer.Async_Timer(10, u._broadcast).start()
     listner = Thread(target=main, args=(u.sock_l,))
     listner.start()
+    
+    
 
     
     

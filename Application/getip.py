@@ -11,15 +11,19 @@ import socket
 import re
 
 
-def ip_is_local(self, ip_string):
+
+def ip_is_local(ip_string):
     
     combined_regex = "(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)"
     return re.match(combined_regex, ip_string) is not None   
     
-def get_local_ip(self):
+def get_local_ip():
     
-    local_ips = [ x[4][0] for x in socket.getaddrinfo(socket.gethostname(), 80) if self.ip_is_local(x[4][0]) ]
-    local_ip = local_ips[0] if len(local_ips) > 0 else None
+    local_ips = [ x[4][0] for x in socket.getaddrinfo(socket.gethostname(), 80) if ip_is_local(x[4][0]) ]
+    local_ip =  local_ips[0] if len(local_ips) > 0 else None
+    
+    if local_ip:
+        return local_ip
 
     if not local_ip:
         temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -30,3 +34,11 @@ def get_local_ip(self):
             return "127.0.0.1"
         finally:
             temp_socket.close()
+
+          
+if __name__== "__main__":
+    
+    client_ip = get_local_ip()
+    print "IP Address is: %s"%(client_ip)
+
+    
