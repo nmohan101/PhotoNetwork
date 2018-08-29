@@ -13,6 +13,7 @@ from threading import Thread
 import datetime
 import json
 import struct
+import sys
 
 #********Local Imports************
 import AsyncTimer
@@ -52,19 +53,20 @@ class client_udp(object):
                         self.host_status = True
                         self.master_hostname = message["hostname"]
                         self.master_ip = addr[0]
-                        print data
+                        print "%s rx %s"%(datetime.datetime.now(), data)
                 except socket.timeout:
-                    print "Master Not found"
+                    print "%s STATUS - MASTER NOT FOUND"%datetime.datetime.now()
                     self.master_hostname = ""
                     self.master_ip = ""
                     self.host_status = False
             except(KeyboardInterrupt, SystemExit):
+                sys.exit()
                 raise
                              
     def send_heartbeat(self):
         heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "clent_ip": cu.ip, "time": str(datetime.datetime.now())}
         data = json.dumps(heartbeat)
-        print "Sending heartbeat"
+        print "%s tx %s"%(datetime.datetime.now(), heartbeat)
         cu.sock_txrx.sendto(data, (cu.master_ip, port_txrx))
         cu.package_counter += 1
     
@@ -83,16 +85,19 @@ class controller(object):
     def status_controller(self):
         host_finder = Thread(target=cu.find_host)
         host_finder.start()
+        heartbeat = AsyncTimer.Async_Timer(10, cu.send_heartbeat)
         
         try:
             while True:
                 if cu.host_status == True and self.heartbeat_active == False:
-                    AsyncTimer.Async_Timer(10, cu.send_heartbeat).start()
+                    heartbeat.start()
                     self.heartbeat_active = True
                 elif cu.host_status == False and self.heartbeat_active == True:
-                    AsyncTimer.Async_Timer(10, cu.send_heartbeat).cancel()         #Stop sending heartbeats as the host is no longer active
+                    heartbeat.cancel()                                       #Stop sending heartbeats as the host is no longer active
                     self.heartbeat_active = False
+                    print "%s STATUS - LOST CONNECTION"%datetime.datetime.now()
         except(KeyboardInterrupt, SystemExit):
+            sys.exit()
             raise
     
 if __name__=="__main__": 

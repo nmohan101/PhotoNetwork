@@ -16,7 +16,6 @@ import datetime
 
 #********Local Imports************
 import AsyncTimer
-import getip
 
 #******Costants********************
 broadcast_port = 5560
@@ -34,8 +33,8 @@ class UDP(object):
         self.bc_msg_counter = 0
      
     def _broadcast(self):
-        print "Sending broadcast message"
         bcast_message = {"type": "host_broadcast", "total_bc": self.bc_msg_counter, "hostname": socket.gethostname(), "time": str(datetime.datetime.now())}
+        print "%s tx %s"%(datetime.datetime.now(), bcast_message)
         data = json.dumps(bcast_message)
         try:
             self.sock_b.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -62,9 +61,8 @@ def main(listen):
     listen.bind(("", listen_port))
     try:
         while True:
-            print "Waiting for data"
             data, port = listen.recvfrom(4096)
-            print json.loads(data)
+            print "%s rx %s"%(datetime.datetime.now(), json.loads(data))
     except(KeyboardInterrupt, SystemExit):
         raise
     
