@@ -1,20 +1,20 @@
 #include <stdio.h>
-#include <sqlite3.h> 
+#include <sqlite3.h>
 
-int main(int argc, char* argv[]) 
+int main()
 {
    sqlite3 *db;
    char *zErrMsg = 0;
    int rc;
 
-   rc = sqlite3_open("test.db", &db);
+   rc = sqlite3_open("client_list.db", &db);
 
-   if(rc) 
+   if(rc)
    {
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
       return(0);
-   } 
-   else 
+   }
+   else
    {
       fprintf(stderr, "Opened database successfully\n");
    }
