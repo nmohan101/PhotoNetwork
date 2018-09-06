@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <sqlite3.h>
 
-int main()
+int data_base(void)
 {
    sqlite3 *db;
    char *zErrMsg = 0;
@@ -19,5 +19,11 @@ int main()
       fprintf(stderr, "Opened database successfully\n");
    }
    sqlite3_close(db);
+}
+
+
+int main()
+{
+    //data_base()
 }
 

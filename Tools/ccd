@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+ccd() 
+{
+  cd /main_server/c/Users/nmohan/My Documents/GitHub/Photo_Network
+}
+
+
+ccd
+
