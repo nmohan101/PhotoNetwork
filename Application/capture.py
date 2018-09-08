@@ -11,6 +11,7 @@ __copyright__   = "Copy Right 2018. NM Technlogies"
 from picamera import PiCamera
 import datetime
 import argparse
+import logging
 
 class Camera(object):
     
@@ -66,16 +67,21 @@ class Camera(object):
             time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S"))
             self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))
             
-            print "Imaged saved to: %s/%s"%(self.capture_path, time_stamp)
+            logging.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
 
 if __name__=="__main__":
     
     #Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--capture', default=1, type = int, help = "Enter number of captures to be taken")
+    parser.add_argument('-v', '--verbosity', action = "store_true",  help = "Enter -v for verbosity")
     args = parser.parse_args()
     captures = args.capture
     
+    logging.basicConfig(filename='capture.log', level=logging.INFO)
+    if args.verbosity:
+        logging.getLogger().setLevel(logging.INFO)
+        
     #Intialize the camera object
     c = Camera()
     

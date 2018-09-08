@@ -1,30 +1,58 @@
+//*************************************************************************//
+//event_handler.c: This program is reads data coming out of server.py and
+//                  is responsible for the maintence of the data base.
+//
+//__author__      = "Nitin Mohan
+//__copyright__   = "Copy Right 2018. NM Technlogies"
+//*************************************************************************//
+
+//*****SYSTEM IMPORTS**********//
 #include <stdio.h>
 #include <sqlite3.h>
+
+//****LOCAL IMPORTS************//
 #include "jsmn.h"
 
+//*****CONSTANTS***************//
 #define JSON_FILE_PATH "/main_server/c/Users/nmohan/Documents/GitHub/Photo_Network/Application/bcmessage.json"
 #define BUFFER_SIZE 5000
 #define MAX_TOKEN_COUNT 128
 
+//****Prototypes************//
+void readfile(char *filepath, char *fileContent);
+int parseJSON(char *filepath);
+void data_base(void);
+
+
+//*****Start of Program**********
+int main(int argc, char *argv[]){
+    //data_base();
+    parseJSON(JSON_FILE_PATH);
+    return 0;
+}
+
+
 // Read files
-void readfile(char* filepath, char* fileContent)
-{
-    FILE *f;
+void readfile(char *filepath, char *fileContent){
+
+	FILE *f;
     char c;
     int index;
+
     f = fopen(filepath, "rt");
+
     while((c = fgetc(f)) != EOF){
         fileContent[index] = c;
         index++;
     }
     fileContent[index] = '\0';
+
 }
 
 // This is where the magic happens
-int parseJSON(char *filepath, void callback(char *, char*)){
+int parseJSON(char *filepath){
 
     char JSON_STRING[BUFFER_SIZE];
-
     char value[1024];
     char key[1024];
 
@@ -59,7 +87,6 @@ int parseJSON(char *filepath, void callback(char *, char*)){
 
        int string_length = json_value.end - json_value.start;
        int key_length = json_key.end - json_key.start;
-
        int idx;
 
        for (idx = 0; idx < string_length; idx++){
@@ -73,18 +100,13 @@ int parseJSON(char *filepath, void callback(char *, char*)){
        value[string_length] = '\0';
        key[key_length] = '\0';
 
-       callback(key, value);
-
+       printf("%s : %s\n", key, value);
        i++;
    }
 
    return 0;
 }
 
-// Only prints the key and value
-void mycallback(char *key, char* value){
-    printf("%s : %s\n", key, value);
-}
 void data_base(void)
 {
    sqlite3 *db;
@@ -104,12 +126,4 @@ void data_base(void)
 }
 
 
-int main()
-{
-    //data_base();
-    parseJSON(JSON_FILE_PATH, mycallback);
-    return 0;
-
-
-}
 
