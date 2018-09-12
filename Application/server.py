@@ -37,50 +37,55 @@ class UDP(object):
     
     def _broadcast(self):
         bcast_message = {"type": "host_broadcast", "total_bc": self.bc_msg_counter, "hostname": socket.gethostname(), "time": str(datetime.datetime.now())}
-        logging.info("%s tx %s"%(datetime.datetime.now(), bcast_message))
+        logger.info(" tx %s"%(bcast_message))
         data = json.dumps(bcast_message)
-        with open("bcmessage.json", "w") as f:
-            json.dump(bcast_message, f)
-        try:
-            self.sock_b.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            self.sock_b.sendto(data, ('255.255.255.255',BROADCAST_PORT))
-            self.bc_msg_counter += 1
-        except(KeyboardInterrupt, SystemExit):
-            self.sock_b.shutdown
-            self.sock_m.shutdown
-            self.sock_l.shutdown
-            raise
+        self.sock_b.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.sock_b.sendto(data, ('255.255.255.255',BROADCAST_PORT))
+        self.bc_msg_counter += 1
 
     def _multicast(self):
-        logging.info("Sending multicast message")
+        logger.info("Sending multicast message")
         self.sock_m.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.ip))
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-        
         membership_request = socket.inet_aton(MULTICAST_IP) + socket.inet_aton(self.ip)
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, membership_request)
-
         self.sock_m.sendto("Hello",(MULTICAST_IP, MULTICAST_PORT))
 
 class FIFO(object):
     def __init__(self):
         self.fifo_path = ("/tmp/server_rx.fifo")
+        if os.path.exists("/tmp/server_rx.fifo"):
+            os.system("rm /tmp/server_rx.fifo")
         os.mkfifo(self.fifo_path)
-    
+        
     def write(self, data):
         fifo = open(self.fifo_path, "w")
         fifo.write(data)
         fifo.close()
 
-def main(listen):
-    listen.bind(("", LISTEN_PORT))
-    try:
-        while True:
-            data, port = listen.recvfrom(4096)
-            logging.info("%s rx %s"%(datetime.datetime.now(), json.loads(data)))
-            fifo.write(data)         
-    except(KeyboardInterrupt, SystemExit):
-        raise
+class MAIN(object):
+    def __init__(self):
+        self.sys_exit = False
+
+    def exit(self):
+        inp = raw_input("PRESS ANY KEY TO EXIT\n")
+        self.sys_exit = True
+
+    def main(self,listen):
+        listen.settimeout(20)
+        listen.bind(("", LISTEN_PORT))
+
+        while self.sys_exit == False:
+            try:
+                data, port = listen.recvfrom(1024)
+                logger.info("rx %s"%(json.loads(data)))
+                #fifo.write(data)        
+            except socket.timeout:
+                logger.warning("NO MESSAGE RECEIVED")
+
+        logger.warning("SHUTDOWN EXECUTED")
+        listen.close()
     
 if __name__== "__main__":
     
@@ -89,26 +94,37 @@ if __name__== "__main__":
     parser.add_argument('-v', '--verbosity', action = "store_true",  help = "Enter -v for verbosity")
     args = parser.parse_args()
     
-    logging.basicConfig(filename='server.log', level=logging.INFO)
+    #Create and configure the logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch = logging.StreamHandler()
+    fh = logging.FileHandler("%s.log"%sys.argv[0].split(".")[0])
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+    
     if args.verbosity:
-        logging.getLogger().setLevel(logging.DEBUG)
-
+        print "VERBOSE MODE"
+        ch.setLevel(logging.DEBUG)
+    else:
+        ch.setLevel(logging.WARNING)
+    
+    logger.addHandler(ch)
+    logger.addHandler(fh)
+    
+    #Configure and run the main program
     u = UDP()
+    mn = MAIN()
     fifo = FIFO()
     brdcast = AsyncTimer.Async_Timer(10, u._broadcast)
     brdcast.start()
-    listner = Thread(target=main, args=(u.sock_l,))
-    listner.start()    
-    
-    inp = raw_input("PRESS ANY KEY TO EXIT")
-    
-    if inp:
-        print "SHUTDOWN EXECUTED"
-        brdcast.cancel()
-        u.sock_b.shutdown
-        u.sock_m.shutdown
-        u.sock_l.shutdown
-        sys.exit(1)
+    Thread(target=mn.exit).start()
+    mn.main(u.sock_l)
+
+    #Shutdown Sequence
+    brdcast.cancel()
+    u.sock_b.close()
+    u.sock_m.close()
 
     
     

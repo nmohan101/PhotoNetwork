@@ -22,7 +22,7 @@ import getip
 
 #**************Constants***********
 PORT_TXRX = 5580
-LISTEN_PORT = 6005
+LISTEN_PORT = 5560
 MULTICAST_PORT = 5570
 MULTICAST_IP = "224.1.1.1"
 
@@ -41,34 +41,31 @@ class client_udp(object):
         self.package_counter = 0
         self.sock_txrx.settimeout(30)                        #Set the socket timeout to 30 seconds 
         self.sock_txrx.bind(('', LISTEN_PORT))               #Bind socket to broadcast listening port
-        self.host_status = False
+        self.host_status = False                             #Flag - True if Master is found and False if Master is not found
     
       
-    def  find_host(self):
+    def  find_host(self, sys_exit):
         
-        while self.sock_txrx: 
+        while sys_exit==False: 
             try:
-                try:
-                    data, addr = self.sock_txrx.recvfrom(1024)
-                    message = json.loads(data)
-                    if message["type"] == "host_broadcast":
-                        self.host_status = True
-                        self.master_hostname = message["hostname"]
-                        self.master_ip = addr[0]
-                        logging.info("%s rx %s"%(datetime.datetime.now(), data))
-                except socket.timeout:
-                    logging.warning("%s STATUS - MASTER NOT FOUND"%datetime.datetime.now())
-                    self.master_hostname = ""
-                    self.master_ip = ""
-                    self.host_status = False
-            except(KeyboardInterrupt, SystemExit):
-                sys.exit()
-                raise
-                             
+                data, addr = self.sock_txrx.recvfrom(1024)
+                message = json.loads(data)
+                if message["type"] == "host_broadcast":
+                    self.host_status = True
+                    self.master_hostname = message["hostname"]
+                    self.master_ip = addr[0]
+                    logger.info("rx %s"%data)
+            except socket.timeout:
+                logger.warning("STATUS - MASTER NOT FOUND")
+                self.master_hostname = ""
+                self.master_ip = ""
+                self.host_status = False
+        self.sock_txrx.close()
+
     def send_heartbeat(self):
         heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "clent_ip": cu.ip, "time": str(datetime.datetime.now())}
         data = json.dumps(heartbeat)
-        logging.info("%s tx %s"%(datetime.datetime.now(), heartbeat))
+        logger.info("tx %s"%heartbeat)
         cu.sock_txrx.sendto(data, (cu.master_ip, PORT_TXRX))
         cu.package_counter += 1
     
@@ -77,62 +74,78 @@ class client_udp(object):
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         
         while True:
-            logging.info(self.sock_multi.recv(10240))
+            logger.info(self.sock_multi.recv(10240))
 
 class controller(object):
     
     def __init__(self):
         self.heartbeat_active = False
-        self.system_exit = False
+        self.sys_exit = False
+
+    def exit(self):
+        inp = raw_input("PRESS ANY KEY TO EXIT\n")
+        self.sys_exit = True
 
     def status_controller(self):
-        host_finder = Thread(target=cu.find_host)
-        host_finder.start()
+        Thread(target=cu.find_host, args=(self.sys_exit,)).start()
+        Thread(target=self.exit).start()
         heartbeat = AsyncTimer.Async_Timer(10, cu.send_heartbeat)
         
-        try:
-            while self.system_exit == False:
-                if cu.host_status == True and self.heartbeat_active == False:
-                   heartbeat.start()
-                   self.heartbeat_active = True
-                elif (cu.host_status == False and self.heartbeat_active == True) or self.system_exit == True:
-                    heartbeat.cancel()                                       #Stop sending heartbeats as the host is no longer active
-                    self.heartbeat_active = False
-                    logging.warning("%s STATUS - LOST CONNECTION"%datetime.datetime.now())
-        except(KeyboardInterrupt, SystemExit):
-            sys.exit(1)
-            raise
 
-    
+        while self.sys_exit == False:
+            if cu.host_status == True and self.heartbeat_active == False:
+                heartbeat.start()
+                self.heartbeat_active = True
+            elif (cu.host_status == False and self.heartbeat_active == True):
+                heartbeat.cancel()                                       #Stop sending heartbeats as the host is no longer active
+                self.heartbeat_active = False
+                logger.warning("STATUS - LOST CONNECTION")
+                
+        logger.warning("SHUTDOWN EXECUTED")
+        heartbeat.cancel() 
+        cu.sock_rx.close()
+        cu.sock_txrx.close()
+        cu.sock_multi.close()
+  
 if __name__=="__main__": 
     
     #Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbosity', action = "store_true",  help = "Enter -v for verbosity")
     args = parser.parse_args()
+
+    #Create and configure the logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch = logging.StreamHandler()
+    fh = logging.FileHandler("%s.log"%sys.argv[0].split(".")[0])
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
     
-    #logging.basicConfig(filename='client.log', level=logging.INFO)
     if args.verbosity:
-        logging.getLogger().setLevel(logging.INFO)
+        print "VERBOSE MODE"
+        ch.setLevel(logging.DEBUG)
+    else:
+        ch.setLevel(logging.WARNING)
+    
+    logger.addHandler(ch)
+    logger.addHandler(fh)
     
     #Intialize the UDP class
     cu = client_udp()
     cntrl = controller()
 
     
-    #Call status controllershutdown
-    controller = Thread(target=cntrl.status_controller)
-    controller.start()
+    #Call status controller
+    cntrl.status_controller()
+
     
-    inp = raw_input("PRESS ANY KEY TO EXIT")
     
-    if inp:
-        logging.warning("SHUTDOWN EXECUTED")
-        cntrl.system_exit = True
-        cu.sock_rx.close()
-        cu.sock_txrx.close()
-        cu.sock_multi.close()
-        sys.exit(1)
+
+
+
+    
 
     
 
