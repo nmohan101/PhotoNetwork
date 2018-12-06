@@ -82,18 +82,19 @@ class controller(object):
         self.heartbeat_active = False
         self.sys_exit = False
 
-    def exit(self):
+    def exits(self):
         inp = raw_input("PRESS ANY KEY TO EXIT\n")
         self.sys_exit = True
 
     def status_controller(self):
-        Thread(target=cu.find_host, args=(self.sys_exit,)).start()
-        Thread(target=self.exit).start()
+        host_finder = Thread(target=cu.find_host, args=(self.sys_exit,))
+        host_finder.start()
         heartbeat = AsyncTimer.Async_Timer(10, cu.send_heartbeat)
         
 
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
+                logger.info("START SENDING HEARTBEATS")
                 heartbeat.start()
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
@@ -132,9 +133,10 @@ if __name__=="__main__":
     logger.addHandler(ch)
     logger.addHandler(fh)
     
-    #Intialize the UDP class
+    #Initialize the UDP class
     cu = client_udp()
     cntrl = controller()
+    Thread(target=cntrl.exits).start()
 
     
     #Call status controller

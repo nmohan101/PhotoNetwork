@@ -68,7 +68,7 @@ class MAIN(object):
     def __init__(self):
         self.sys_exit = False
 
-    def exit(self):
+    def exits(self):
         inp = raw_input("PRESS ANY KEY TO EXIT\n")
         self.sys_exit = True
 
@@ -80,7 +80,7 @@ class MAIN(object):
             try:
                 data, port = listen.recvfrom(1024)
                 logger.info("rx %s"%(json.loads(data)))
-                #fifo.write(data)        
+                fifo.write(data)        
             except socket.timeout:
                 logger.warning("NO MESSAGE RECEIVED")
 
@@ -91,7 +91,8 @@ if __name__== "__main__":
     
     #Parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbosity', action = "store_true",  help = "Enter -v for verbosity")
+    parser.add_argument('-v', '--verbosity', action = "store_true",  
+                        help = "Enter -v for verbosity")
     args = parser.parse_args()
     
     #Create and configure the logger
@@ -118,7 +119,7 @@ if __name__== "__main__":
     fifo = FIFO()
     brdcast = AsyncTimer.Async_Timer(10, u._broadcast)
     brdcast.start()
-    Thread(target=mn.exit).start()
+    Thread(target=mn.exits).start()
     mn.main(u.sock_l)
 
     #Shutdown Sequence
