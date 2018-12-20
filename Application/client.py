@@ -16,8 +16,9 @@ import struct
 import sys
 import logging
 import argparse
+import os
 #********Local Imports************
-import AsyncTimer
+import asynctimer
 import getip
 
 #**************Constants***********
@@ -89,7 +90,7 @@ class controller(object):
     def status_controller(self):
         host_finder = Thread(target=cu.find_host, args=(self.sys_exit,))
         host_finder.start()
-        heartbeat = AsyncTimer.Async_Timer(10, cu.send_heartbeat)
+        heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         
 
         while self.sys_exit == False:
@@ -98,12 +99,12 @@ class controller(object):
                 heartbeat.start()
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
-                heartbeat.cancel()                                       #Stop sending heartbeats as the host is no longer active
+                heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
                 self.heartbeat_active = False
                 logger.warning("STATUS - LOST CONNECTION")
                 
         logger.warning("SHUTDOWN EXECUTED")
-        heartbeat.cancel() 
+        heartbeat.stop() 
         cu.sock_rx.close()
         cu.sock_txrx.close()
         cu.sock_multi.close()
@@ -119,7 +120,7 @@ if __name__=="__main__":
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler()  
     fh = logging.FileHandler("%s.log"%sys.argv[0].split(".")[0])
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)

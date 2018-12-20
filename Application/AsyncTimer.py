@@ -3,27 +3,35 @@
                   thread on a specified interval
 
 __author__      = "Nitin Mohan
-__copyright__   = "Copy Right 2018. NM Technlogies"
+__copyright__   = "Copy Right 2018. NM Technologies"
 
 """
 #********System Imports************
 from threading import Timer
 
-class Async_Timer():
+class AsyncTimer():
+    
+    def __init__(self, interval, function, *args, **kwargs):
+        self._timer     = None
+        self.interval   = interval
+        self.function   = function
+        self.args       = args
+        self.kwargs     = kwargs
+        self.is_running = False
 
-    def __init__(self, t, hFunction):
-        self.t = t
-        self.hFunction = hFunction
-        self.thread = Timer(self.t, self.handle_function)
-
-    def handle_function(self):
-        self.hFunction()
-        self.thread = Timer(self.t, self.handle_function)
-        self.thread.start()
+    def _run(self):
+        self.is_running = False
+        self.start()
+        self.function(*self.args, **self.kwargs)
 
     def start(self):
-        self.thread.start()
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.start()
+            self.is_running = True
 
-    def cancel(self):
-        self.thread.cancel()
+    def stop(self):
+        self._timer.cancel()
+        self.is_running = False
+
 

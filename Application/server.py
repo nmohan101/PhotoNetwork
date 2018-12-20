@@ -18,7 +18,7 @@ import argparse
 import os
 import sys
 #********Local Imports************
-import AsyncTimer
+import asynctimer
 
 #******Costants********************
 BROADCAST_PORT = 5560
@@ -117,13 +117,13 @@ if __name__== "__main__":
     u = UDP()
     mn = MAIN()
     fifo = FIFO()
-    brdcast = AsyncTimer.Async_Timer(10, u._broadcast)
+    brdcast = asynctimer.AsyncTimer(10, u._broadcast)
     brdcast.start()
     Thread(target=mn.exits).start()
     mn.main(u.sock_l)
 
     #Shutdown Sequence
-    brdcast.cancel()
+    brdcast.stop()
     u.sock_b.close()
     u.sock_m.close()
 

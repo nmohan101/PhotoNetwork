@@ -1,0 +1,9 @@
+
+*.pyc
+*.log
+Application/event_handler
+*.json
+*.json
+*.db
+*.json
+/.metadata/
