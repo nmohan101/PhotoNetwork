@@ -25,7 +25,7 @@ class SQL(object):
     def __init__(self, dbfile):
         self.Table = "Clients"
         self.TableCol = """Type text, Total_Heartbeats integer, 
-                         Client_IP integer, Time text"""
+                         Client_IP text, Time text"""
         self.db_file = dbfile
         
 
@@ -53,7 +53,7 @@ def process_FIFO():
     while True:
         if not q.empty():
             TableData = json.loads(q.get())
-            sqlstruct = TableData["type"], TableData["total_hb"], TableData["clent_ip"], TableData["time"]
+            sqlstruct = TableData["type"].encode('utf-8'), TableData["total_hb"], TableData["clent_ip"].encode('utf-8'), TableData["time"].encode('utf-8')
             print sqlstruct
             sql._insertDB(sqlstruct)
 
