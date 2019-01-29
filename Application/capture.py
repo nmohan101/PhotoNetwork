@@ -82,7 +82,7 @@ if __name__=="__main__":
     if args.verbosity:
         logging.getLogger().setLevel(logging.INFO)
         
-    #Intialize the camera object
+    #Initialize the camera object
     c = Camera()
     
     #Read file located in /var/pn/cam_settings
@@ -91,6 +91,6 @@ if __name__=="__main__":
     #Apply camera settings to the camera
     c.camera_settings()
     
-    #Send caommand to capture
+    #Send command to capture
     c.capture(captures)
     

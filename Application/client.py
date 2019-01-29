@@ -64,7 +64,7 @@ class client_udp(object):
         self.sock_txrx.close()
 
     def send_heartbeat(self):
-        heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "clent_ip": cu.ip, "time": str(datetime.datetime.now())}
+        heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "client_ip": cu.ip, "time": str(datetime.datetime.now())}
         data = json.dumps(heartbeat)
         logger.info("tx %s"%heartbeat)
         cu.sock_txrx.sendto(data, (cu.master_ip, PORT_TXRX))
