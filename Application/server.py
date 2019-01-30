@@ -5,7 +5,7 @@
               capture images.
 
 __author__      = "Nitin Mohan
-__copyright__   = "Copy Right 2018. NM Technlogies"
+__copyright__   = "Copy Right 2018. NM Technologies"
 """
 
 #********System Imports************
@@ -20,11 +20,15 @@ import sys
 #********Local Imports************
 import asynctimer
 
-#******Costants********************
+#******Constants********************
 BROADCAST_PORT = 5560
 MULTICAST_PORT = 5570
 LISTEN_PORT = 5580
 MULTICAST_IP = "224.1.1.1"
+UID = pwd.getpwuid(os.getuid()).pw_name
+SERVER_FIFO = "/var/run/%s/server_rx.fifo"%UID
+LOG_PATH = "/var/log/"
+
 
 class UDP(object):
     
@@ -44,7 +48,7 @@ class UDP(object):
         self.bc_msg_counter += 1
 
     def _multicast(self):
-        logger.info("Sending multicast message")
+        logger.info("Sending multi-cast message")
         self.sock_m.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.ip))
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
@@ -54,13 +58,12 @@ class UDP(object):
 
 class FIFO(object):
     def __init__(self):
-        self.fifo_path = ("/tmp/server_rx.fifo")
-        if os.path.exists("/tmp/server_rx.fifo"):
-            os.system("rm /tmp/server_rx.fifo")
+        if os.path.exists(SERVER_FIFO):
+            os.system("rm %s"%SERVER_FIFO) 
         os.mkfifo(self.fifo_path)
         
     def write(self, data):
-        fifo = open(self.fifo_path, "w")
+        fifo = open(SERVER_FIFO, "w")
         fifo.write(data)
         fifo.close()
 
@@ -100,7 +103,7 @@ if __name__== "__main__":
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()
-    fh = logging.FileHandler("%s.log"%sys.argv[0].split(".")[0])
+    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0]))
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
     
@@ -126,26 +129,4 @@ if __name__== "__main__":
     brdcast.stop()
     u.sock_b.close()
     u.sock_m.close()
-
-    
-    
-
-    
-
-    
-    
-
-    
-    
-    
-    
-
-	
-
-
-
-
-
-
-
 

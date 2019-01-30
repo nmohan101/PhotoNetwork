@@ -26,6 +26,7 @@ PORT_TXRX = 5580
 LISTEN_PORT = 5560
 MULTICAST_PORT = 5570
 MULTICAST_IP = "224.1.1.1"
+LOG_PATH = "/var/log/"
 
 
 class client_udp(object):
@@ -121,7 +122,7 @@ if __name__=="__main__":
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()  
-    fh = logging.FileHandler("%s.log"%sys.argv[0].split(".")[0])
+    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0])
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
     
@@ -145,19 +146,3 @@ if __name__=="__main__":
 
     
     
-
-
-
-    
-
-    
-
-    
-    
-    
-	
-
-
-	
-	
-

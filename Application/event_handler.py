@@ -16,10 +16,12 @@ import time
 import threading
 import sys
 import json
+import pwd
 
 #******Constants********************
-dbname = "/tmp/ClientList.db"
-fifoname = "/tmp/server_rx.fifo"
+UID = pwd.getpwuid(os.getuid()).pw_name
+DBNAME = "/srv/PhotoNetwork/PhotoNetwork.db"
+SERVER_FIFO = "/var/run/%s/server_rx.fifo"%UID
 
 class SQL(object):
     def __init__(self, dbfile, Table):
@@ -44,7 +46,7 @@ class SQL(object):
     
 def read_FIFO():
     while True:
-        fifoData = open(fifoname, "r")
+        fifoData = open(SERVER_FIFO, "r")
         q.put(fifoData.read())
         fifoData.close()
 
@@ -60,7 +62,7 @@ def process_FIFO():
       
 if __name__ == '__main__':
     q = Queue.Queue()
-    sql = SQL(dbname, "Clients")
+    sql = SQL(DBNAME, "Incoming_Data")
     rFIFO = threading.Thread(target=read_FIFO)
     pFIFO = threading.Thread(target=process_FIFO)
     rFIFO.daemon = True
