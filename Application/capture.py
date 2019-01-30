@@ -4,7 +4,7 @@
                camera settings and takes captures. 
 
 __author__      = "Nitin Mohan
-__copyright__   = "Copy Right 2018. NM Technlogies"
+__copyright__   = "Copy Right 2018. NM Technologies"
 """
 
 #*********SYSTEM IMPORTS*********
@@ -12,6 +12,9 @@ from picamera import PiCamera
 import datetime
 import argparse
 import logging
+
+#******CONSTANTS****************
+LOG_PATH = "/var/log/"
 
 class Camera(object):
     
@@ -32,7 +35,7 @@ class Camera(object):
     def read_cam_settings(self):
         settings_list = []
         
-        with open("/var/pn/cam_settings", "r") as f:
+        with open("/etc/PhotoNetwork/cam_settings", "r") as f:
             for line in f:
                 settings_list.append(line.rstrip("\n").split("="))
                 
@@ -78,19 +81,19 @@ if __name__=="__main__":
     args = parser.parse_args()
     captures = args.capture
     
-    logging.basicConfig(filename='capture.log', level=logging.INFO)
+    logging.basicConfig(filename='%scapture.log'%LOG_PATH, level=logging.INFO)
     if args.verbosity:
         logging.getLogger().setLevel(logging.INFO)
         
-    #Intialize the camera object
+    #Initialize the camera object
     c = Camera()
     
-    #Read file located in /var/pn/cam_settings
+    #Read file located in /etc/PhotoNetwork/cam_settings
     c.read_cam_settings()
     
     #Apply camera settings to the camera
     c.camera_settings()
     
-    #Send caommand to capture
+    #Send command to capture
     c.capture(captures)
     

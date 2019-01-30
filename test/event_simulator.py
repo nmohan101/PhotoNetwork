@@ -27,7 +27,7 @@ def run():
         if not ip_address in IP_LIST:
             IP_LIST.update({ip_address: 0})
         
-        heartbeat = {"type": "heartbeat", "total_hb": IP_LIST[ip_address], "clent_ip": ip_address, "time": str(datetime.datetime.now())}
+        heartbeat = {"type": "heartbeat", "total_hb": IP_LIST[ip_address], "client_ip": ip_address, "time": str(datetime.datetime.now())}
         IP_LIST[ip_address] += 1
         data = json.dumps(heartbeat)
         print data
