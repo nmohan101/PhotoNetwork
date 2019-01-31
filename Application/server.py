@@ -17,6 +17,7 @@ import logging
 import argparse
 import os
 import sys
+import pwd
 #********Local Imports************
 import asynctimer
 
@@ -25,8 +26,9 @@ BROADCAST_PORT = 5560
 MULTICAST_PORT = 5570
 LISTEN_PORT = 5580
 MULTICAST_IP = "224.1.1.1"
-UID = pwd.getpwuid(os.getuid()).pw_name
-SERVER_FIFO = "/var/run/%s/server_rx.fifo"%UID
+UID = pwd.getpwuid(os.getuid()).pw_uid
+print UID
+SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 LOG_PATH = "/var/log/"
 
 
@@ -60,7 +62,8 @@ class FIFO(object):
     def __init__(self):
         if os.path.exists(SERVER_FIFO):
             os.system("rm %s"%SERVER_FIFO) 
-        os.mkfifo(self.fifo_path)
+	print SERVER_FIFO
+        os.mkfifo(SERVER_FIFO)
         
     def write(self, data):
         fifo = open(SERVER_FIFO, "w")

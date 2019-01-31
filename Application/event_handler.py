@@ -19,9 +19,9 @@ import json
 import pwd
 
 #******Constants********************
-UID = pwd.getpwuid(os.getuid()).pw_name
+UID = pwd.getpwuid(os.getuid()).pw_uid
 DBNAME = "/srv/PhotoNetwork/PhotoNetwork.db"
-SERVER_FIFO = "/var/run/%s/server_rx.fifo"%UID
+SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 
 class SQL(object):
     def __init__(self, dbfile, Table):

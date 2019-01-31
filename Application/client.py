@@ -122,7 +122,7 @@ if __name__=="__main__":
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()  
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0])
+    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0]))
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
     
