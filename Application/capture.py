@@ -15,6 +15,7 @@ import logging
 
 #******CONSTANTS****************
 LOG_PATH = "/var/log/"
+CAM_SETTINGS = "/etc/PhotoNetwork/cam_settings"
 
 class Camera(object):
     
@@ -35,7 +36,7 @@ class Camera(object):
     def read_cam_settings(self):
         settings_list = []
         
-        with open("/etc/PhotoNetwork/cam_settings", "r") as f:
+        with open(CAM_SETTINGS, "r") as f:
             for line in f:
                 settings_list.append(line.rstrip("\n").split("="))
                 
