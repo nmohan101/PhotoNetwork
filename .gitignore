@@ -7,3 +7,4 @@ Application/event_handler
 *.db
 *.json
 /.metadata/
+*.swp
