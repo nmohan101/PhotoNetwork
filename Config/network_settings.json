@@ -1,6 +1,7 @@
-[
-	"_comment": "This file contains network settings",
-	{
-		"Network_Mode": "server"
-	}
-]
+{
+	"_comment": "This file contains all the configuration for the photo network progream",
+	"Network_Mode":"client",
+	"Sim_Mode":true,
+	"test_path":"/home/nmohan/Documents/PhotoNetwork/test/",
+	"app_path":"/home/nmohan/Documents/PhotoNetwork/Application/"
+}

@@ -26,7 +26,7 @@ PORT_TXRX = 5580
 LISTEN_PORT = 5560
 MULTICAST_PORT = 5570
 MULTICAST_IP = "224.1.1.1"
-LOG_PATH = "/var/log/"
+LOG_PATH = "/var/log/PhotoNetwork/"
 
 
 class client_udp(object):

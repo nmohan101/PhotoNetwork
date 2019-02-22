@@ -27,9 +27,8 @@ MULTICAST_PORT = 5570
 LISTEN_PORT = 5580
 MULTICAST_IP = "224.1.1.1"
 UID = pwd.getpwuid(os.getuid()).pw_uid
-print UID
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
-LOG_PATH = "/var/log/"
+LOG_PATH = "/var/log/PhotoNetwork/"
 
 
 class UDP(object):
