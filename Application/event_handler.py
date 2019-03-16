@@ -21,6 +21,7 @@ import json
 import pwd
 import argparse
 import logging
+import datetime as dt
 
 #---------------------------------------------------#
 #                   Local Imports                   #
@@ -33,7 +34,7 @@ import asynctimer
 #---------------------------------------------------#
 UID = pwd.getpwuid(os.getuid()).pw_uid
 DBNAME = "/srv/PhotoNetwork/PhotoNetwork.db"
-SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
+SERVER_fifo = "/var/run/user/%s/server_rx.fifo"%UID
 LOG_PATH = "/var/log/PhotoNetwork/"
 
 #Database Table Names
@@ -82,15 +83,25 @@ class SQL(object):
         conn.commit()
         conn.close()
         logger.debug("Data: {} Written to Table: {} into database".format(input_struct, table))
-    
+
+    def removeDB(self, column, arg, table):
+        #\Input column name, value , table name
+        #\Function: Remove line from database given input
+        #\Output: N/A
+        
+        conn = sqlite3.connect(self.db_file)
+        input_struct = "DELETE FROM %s WHERE %s = ?"%(table, column)
+        conn.cursor().execute(input_struct, arg)
+
 class InputProcessor(object):
     def __init__(self):
         self.clients_list = []
 
     def check_client_present(self, client_data):
 
-        #"""The purpose of this function is to check if the client is in the clients list. If the client is presnet;
-        #   update the data in the list. If not present add the new client data"""
+        #\Input: client_data (client_ip, total_heartbeats, time)
+        #\Function: Check if clients list has the input ip. Add if not.
+        #\Output: True if ip was found in list and false if ip was not found
         
         client = filter(lambda c_ip: c_ip["client_ip"] == client_data[0], self.clients_list) 
         if client:    
@@ -101,7 +112,28 @@ class InputProcessor(object):
             self.clients_list.append({"client_ip": client_data[0], "total_hb": client_data[1], "time": client_data[2]})
             return False
 
+    def inactive_detection(self):
+
+        #\Input: N/A
+        #\Function: Check if any client has been inactive for longer than 120s
+        #\Output: If client has been active for longer than 120s remove from db, if not do nothing
+
+        current_time = dt.datetime.now()
+        inactive_clients = filter(lambda client: current_time - dt.strptime(client["time"]) > 120, self.client_list)
+
+        if inactive_clients:
+                for inact in inactive_clients:
+                    client_index = self.clients_list.index(inact)
+                    del self.clients_list[client_index]
+                    sql.removeDB("client_ip", inact["client_ip"], ACTIVE_CLIENTS)
+
+        
     def process_fifo_data(self):
+
+        #\Input: Queue input from read_fifo function
+        #\Function: `
+        #\Output: True if ip was found in list and false if ip was not found
+
         while True:
             if not q.empty():
                 TableData = json.loads(q.get())
@@ -114,8 +146,8 @@ class InputProcessor(object):
 
 def read_fifo():
     while True:
-        fifoData = open(SERVER_FIFO, "r")
-        logger.debug("Data in FIFO, writing to Queue") 
+        fifoData = open(SERVER_fifo, "r")
+        logger.debug("Data in fifo, writing to Queue") 
         q.put(fifoData.read())
         fifoData.close()
         time.sleep(1)
@@ -150,16 +182,20 @@ if __name__ == '__main__':
     #Initialize and the start of the program
     q = Queue.Queue()
     sql = SQL(DBNAME)
-    rFIFO = threading.Thread(target=read_fifo)
-    pFIFO = threading.Thread(target=process_fifo_data)
-    rFIFO.daemon = True
-    pFIFO.daemon = True
-    while not os.path.exists(SERVER_FIFO):
+    in_proc = InputProcessor()
+    rfifo = threading.Thread(target=read_fifo)
+    pfifo = threading.Thread(target=in_proc.process_fifo_data)
+    inactive_alg = threading.Thread(target=in_proc.inactive_detection)
+    rfifo.daemon = True
+    pfifo.daemon = True
+    inactive_alg.daemon = True
+    while not os.path.exists(SERVER_fifo):
         #Do Nothing
-        logger.warning("FIFO File Not Found")
+        logger.warning("fifo File Not Found")
         time.sleep(1)
-    rFIFO.start()
-    pFIFO.start()
+    rfifo.start()
+    pfifo.start()
+    inactive_alg.start()
     
     if raw_input("PRESS ANY KEY TO EXIT\n"):
         sys.exit()

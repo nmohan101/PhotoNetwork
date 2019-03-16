@@ -7,7 +7,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technlogies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import datetime
 import json
 import logging
@@ -18,13 +20,19 @@ import time
 import sys
 import pwd
 
-#*******Constants*****************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 IP_ADDRESS = "192.168.0"
 IP_LIST = {}
 LOG_PATH = "/var/log/PhotoNetwork/"
 UID = pwd.getpwuid(os.getuid()).pw_uid
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 
+
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 def run():
     while True:
         logger.debug("Executing simulation")
