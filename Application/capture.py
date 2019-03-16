@@ -7,19 +7,24 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technologies"
 """
 
-#*********SYSTEM IMPORTS*********
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 from picamera import PiCamera
 import datetime
 import argparse
 import logging
 
-#******CONSTANTS****************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 LOG_PATH = "/var/log/"
 CAM_SETTINGS = "/etc/PhotoNetwork/cam_settings"
 
 class Camera(object):
     
     def __init__(self):
+        #Initialize all camera inputs to 0
         self.camera = PiCamera()
         self.capture_path = ""
         self.res_width = 0
@@ -34,6 +39,7 @@ class Camera(object):
         self.flash = ""
         
     def read_cam_settings(self):
+        #Read and save camera settings
         settings_list = []
         
         with open(CAM_SETTINGS, "r") as f:
@@ -55,6 +61,7 @@ class Camera(object):
             
             
     def camera_settings(self):
+        #Apply Camera settings 
         self.camera.resolution = (self.res_width, self.res_height)
         self.camera.sharpness = self.sharpness
         self.camera.contrast = self.contrast
@@ -67,6 +74,7 @@ class Camera(object):
 
     def capture(self, captures):
         
+        #Capture an image and store it in specified location
         for c in range(0, captures):
             time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S"))
             self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))

@@ -8,7 +8,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technologies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import sqlite3
 import os
 import Queue
@@ -20,16 +22,28 @@ import pwd
 import argparse
 import logging
 
-#******Constants********************
+#---------------------------------------------------#
+#                   Local Imports                   #
+#---------------------------------------------------#
+import asynctimer
+
+
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 UID = pwd.getpwuid(os.getuid()).pw_uid
 DBNAME = "/srv/PhotoNetwork/PhotoNetwork.db"
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 LOG_PATH = "/var/log/PhotoNetwork/"
 
-#******Database Table Names**********
+#Database Table Names
 ALL_MESSAGES = "All_Messages"
 ACTIVE_CLIENTS = "Active_Clients"
 
+
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class TableConfig(object):
     def __init__(self):
         self.tables = [{"TableName": ALL_MESSAGES, "TableCol": """id integer PRIMARY KEY, type text NOT NULL, 
@@ -74,6 +88,10 @@ class InputProcessor(object):
         self.clients_list = []
 
     def check_client_present(self, client_data):
+
+        #"""The purpose of this function is to check if the client is in the clients list. If the client is presnet;
+        #   update the data in the list. If not present add the new client data"""
+        
         client = filter(lambda c_ip: c_ip["client_ip"] == client_data[0], self.clients_list) 
         if client:    
             client_index = self.clients_list.index(client[0])

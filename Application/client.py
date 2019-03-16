@@ -7,7 +7,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technlogies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import socket
 from threading import Thread
 import datetime
@@ -17,11 +19,16 @@ import sys
 import logging
 import argparse
 import os
-#********Local Imports************
+
+#---------------------------------------------------#
+#                   Local Imports                   #
+#---------------------------------------------------#
 import asynctimer
 import getip
 
-#**************Constants***********
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 PORT_TXRX = 5580
 LISTEN_PORT = 5560
 MULTICAST_PORT = 5570
@@ -29,6 +36,9 @@ MULTICAST_IP = "224.1.1.1"
 LOG_PATH = "/var/log/PhotoNetwork/"
 
 
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class client_udp(object):
     
     def __init__(self):

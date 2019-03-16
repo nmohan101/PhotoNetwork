@@ -8,16 +8,24 @@ __copyright__   = "Copy Right 2018. NM Technologies"
 """
 
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import subprocess
 from threading import Thread
 import logging
 import json
 import time
 
-#*******Constants******************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 SETTINGS_FILE = "/etc/PhotoNetwork/network_settings.json"
 
+
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class config(object):
 	def __init__(self):
 		self.settings_data = self._getsettings()

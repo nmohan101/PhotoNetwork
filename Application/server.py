@@ -8,7 +8,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technologies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import socket
 from threading import Thread
 import json
@@ -18,10 +20,16 @@ import argparse
 import os
 import sys
 import pwd
-#********Local Imports************
+
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 import asynctimer
 
-#******Constants********************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
+SETTINGS_FILE = "/etc/PhotoNetwork/network_settings.json"
 BROADCAST_PORT = 5560
 MULTICAST_PORT = 5570
 LISTEN_PORT = 5580
@@ -31,6 +39,9 @@ SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 LOG_PATH = "/var/log/PhotoNetwork/"
 
 
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class UDP(object):
     
     def __init__(self):
