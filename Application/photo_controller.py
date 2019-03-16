@@ -42,7 +42,7 @@ class controller(object):
         if config.sim == True:
             events = subprocess.Popen(["python", config.test_path + "event_simulator.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time.sleep(1)
-            handler = subprocess.Popen(["python", config.app_path + "event_handler.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            handler = subprocess.Popen(["python", config.app_path + "event_handler.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             while True:
                 if  events.poll() != None:
                     print "event_handler.py is no longer running"

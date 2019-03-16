@@ -26,32 +26,75 @@ DBNAME = "/srv/PhotoNetwork/PhotoNetwork.db"
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 LOG_PATH = "/var/log/PhotoNetwork/"
 
+#******Database Table Names**********
+ALL_MESSAGES = "All_Messages"
+ACTIVE_CLIENTS = "Active_Clients"
+
+class TableConfig(object):
+    def __init__(self):
+        self.tables = [{"TableName": ALL_MESSAGES, "TableCol": """id integer PRIMARY KEY, type text NOT NULL, 
+                        total_heartbeats integer NOT NULL, client_ip text NOT NULL, time text NOT NULL"""},
+                       {"TableName": "Active_Clients", "TableCol": """id integer PRIMARY KEY, client_ip text NOT NULL, 
+                        total_heartbeats integer NOT NULL, last message, text NOT NULL"""}]
+
 class SQL(object):
-    def __init__(self, dbfile, Table):
-        self.Table = Table
-        self.TableCol = """id integer, type text, total_heartbeats integer, client_ip text, time text"""
+    def __init__(self, dbfile):
         self.db_file = dbfile
         self._createDB()
-        self.id = 0
 
     def _createDB(self):
         """ create a database connection to a SQLlite database """
         conn = sqlite3.connect(self.db_file)
-        conn.cursor().execute("CREATE TABLE IF NOT EXISTS %s (%s)"%(self.Table, self.TableCol))
-        conn.commit()
+        for table in TableConfig().tables:
+            logger.debug("Creating Table {}".format(table))
+            conn.cursor().execute("CREATE TABLE IF NOT EXISTS %s (%s)"%(table["TableName"], table["TableCol"]))
+            conn.commit()
+            logger.debug("Created Table: {}".format(table["TableCol"]))
         conn.close()
         logger.debug("Database creation successful")
         
-    def insetDB(self,  data):
+    def _create_input_struct(self, sqlstruct, table):
+        struct = "INSERT INTO %s(type, total_heartbeats, client_ip, time) VALUES("%(table)
+
+        for item in sqlstruct:
+            struct += "?, "
+         
+        return struct[:len(struct)-2] + ")"
+                 
+    def insetDB(self, sqlstruct, table):
         conn = sqlite3.connect(self.db_file)
-        conn.cursor().execute("INSERT INTO %s VALUES(?, ?, ?, ?, ?)"%self.Table, (self.id, data[0], data[1], data[2], data[3]))
+        input_struct = self._create_input_struct(sqlstruct, table)
+        conn.cursor().execute(input_struct, sqlstruct)
         conn.commit()
         conn.close()
-        logger.debug("Writing {} into database".format(data))
-        self.id += 1
-
+        logger.debug("Data: {} Written to Table: {} into database".format(input_struct, table))
     
-def read_FIFO():
+class InputProcessor(object):
+    def __init__(self):
+        self.clients_list = []
+
+    def check_client_present(self, client_data):
+        client = filter(lambda c_ip: c_ip["client_ip"] == client_data[0], self.clients_list) 
+        if client:    
+            client_index = self.clients_list.index(client[0])
+            self.clients_list[client_index] = {"client_ip": client_data[0], "total_hb": client_data[1], "time": client_data[2]}
+            return True
+        else:
+            self.clients_list.append({"client_ip": client_data[0], "total_hb": client_data[1], "time": client_data[2]})
+            return False
+
+    def process_fifo_data(self):
+        while True:
+            if not q.empty():
+                TableData = json.loads(q.get())
+                logger.debug("Data from read_Fifo found {}".format(TableData))
+                sqlstruct = (TableData["type"].encode('utf-8'), TableData["total_hb"], TableData["client_ip"].encode('utf-8'), TableData["time"].encode('utf-8'))
+                sql.insetDB(sqlstruct, ALL_MESSAGES)
+            else:
+                logger.warning("Queue is empty; no events to process")
+            time.sleep(1)
+
+def read_fifo():
     while True:
         fifoData = open(SERVER_FIFO, "r")
         logger.debug("Data in FIFO, writing to Queue") 
@@ -59,15 +102,6 @@ def read_FIFO():
         fifoData.close()
         time.sleep(1)
 
-def process_FIFO():
-    while True:
-        if not q.empty():
-            TableData = json.loads(q.get())
-            sqlstruct = TableData["type"].encode('utf-8'), TableData["total_hb"], TableData["client_ip"].encode('utf-8'), TableData["time"].encode('utf-8')
-            sql.insetDB(sqlstruct)
-        else:
-            logger.warning("Queue is empty; no events to process")
-        time.sleep(1)
 
 
 if __name__ == '__main__':
@@ -97,9 +131,9 @@ if __name__ == '__main__':
 
     #Initialize and the start of the program
     q = Queue.Queue()
-    sql = SQL(DBNAME, "Incoming_Data")
-    rFIFO = threading.Thread(target=read_FIFO)
-    pFIFO = threading.Thread(target=process_FIFO)
+    sql = SQL(DBNAME)
+    rFIFO = threading.Thread(target=read_fifo)
+    pFIFO = threading.Thread(target=process_fifo_data)
     rFIFO.daemon = True
     pFIFO.daemon = True
     while not os.path.exists(SERVER_FIFO):
