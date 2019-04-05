@@ -72,7 +72,7 @@ class FIFO(object):
     def __init__(self):
         if os.path.exists(SERVER_FIFO):
             os.system("rm %s"%SERVER_FIFO) 
-	print SERVER_FIFO
+        print SERVER_FIFO
         os.mkfifo(SERVER_FIFO)
         
     def write(self, data):
@@ -80,7 +80,7 @@ class FIFO(object):
         fifo.write(data)
         fifo.close()
 
-class MAIN(object):
+class server(object):
     def __init__(self):
         self.sys_exit = False
 
@@ -131,7 +131,7 @@ if __name__== "__main__":
     
     #Configure and run the main program
     u = UDP()
-    mn = MAIN()
+    mn = server()
     fifo = FIFO()
     brdcast = asynctimer.AsyncTimer(10, u._broadcast)
     brdcast.start()
