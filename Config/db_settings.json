@@ -24,7 +24,7 @@
                                                           "cl_parm" : "NOT NULL"
                                                         }, 
                                                         {
-                                                          "cl_name" : "total_heartbeats",
+                                                          "cl_name" : "total_hb",
                                                           "cl_type" : "integer",
                                                           "cl_parm" : "NOT NULL"
                                                         }, 
@@ -37,7 +37,7 @@
                                   {
                                     "tb_name"        : "Active_Clients",
                                     "tb_index"       : 1,
-                                    "tb_update_mode" : ["total_heartbeats", "time"],
+                                    "tb_update_mode" : ["total_hb", "time"],
                                     "tb_columns"     : [{
                                                           "cl_name" : "id",
                                                           "cl_type" : "integer",
@@ -49,7 +49,7 @@
                                                           "cl_parm" : "NOT NULL"
                                                         }, 
                                                         {
-                                                          "cl_name" : "total_heartbeats",
+                                                          "cl_name" : "total_hb",
                                                           "cl_type" : "integer",
                                                           "cl_parm" : "NOT NULL"
                                                         }, 

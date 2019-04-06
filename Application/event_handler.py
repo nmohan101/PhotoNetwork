@@ -91,12 +91,13 @@ class TableConfig(object):
                         table_string = "{} {} {} {},".format(table_string, column["cl_name"], column["cl_type"], column["cl_parm"])
                 table_string = table_string[:-1] 
                 table_struct.update({"TableCol": table_string})
-                db_data += [{"db_name": db_name, "tb_name": tb_name, "tb_columns": column_names, "tb_update_mode": tb_update_mode}]
+                tables.append(table_struct)
+                db_data += [{"db_name": db_name, "tb_name": tb_name, "tb_columns": column_names, "tb_update_mode": tb_update_mode}] #Show Database name for each table. 
                 tb_index_data += [{"tb_index": tb_index, "tb_name": tb_name}]
+            LOGGER.debug("Requesting Database creation with the following: db_name = {}, tables = {}".format(db_name, tables))
             sql = SQL(db_path, tables)
-            db_index_data = [{"db_index":db_index, "tb_name":tb_name, "tables": tb_index_data}]
+            db_index_data = [{"db_index":db_index, "db_name":db_name, "db_path": db_path, "tables": tb_index_data}]
             all_index += db_index_data
-        LOGGER.debug("Databases created {}".format(db_data))
         return db_data, all_index, sql
 
 class SQL(object):
@@ -144,14 +145,16 @@ class SQL(object):
         #\Output: Skeleton structure and values
 
         struct_1 = "UPDATE %s set "%table
-        struct_2 = "WHERE %s = ?"%(update_arg[0])
+        struct_2 = " WHERE %s = ?"%(update_arg[0])
         update_struct = []
 
-        for key, item in columns.items():
-            struct_1 += "%s = ?, "%key
-            update_struct.append(item)
+        for col in columns:
+            struct_1 += "%s = ?, "%col[0]
+            update_struct.append(col[1])
 
+        struct_1 = struct_1[:-2]
         skel_struct = struct_1 + struct_2
+        update_struct.append(update_arg[1])
         return skel_struct, tuple(update_struct)
          
     def insertDB(self, sqlstruct, db_file, table, tb_columns):
@@ -160,7 +163,9 @@ class SQL(object):
         #\Output: N/A
 
         conn = sqlite3.connect(db_file)
+        print db_file
         input_struct = self._insert_input_struct(sqlstruct, table, tb_columns)
+        print (input_struct, sqlstruct)
         conn.cursor().execute(input_struct, sqlstruct)
         conn.commit()
         conn.close()
@@ -182,6 +187,7 @@ class SQL(object):
 
         conn = sqlite3.connect(db_file)
         skel_struct, update_struct = self._update_input_struct(columns, table, update_arg)
+        print (skel_struct, update_struct)
         conn.cursor().execute(skel_struct, update_struct)
         conn.commit()
         conn.close()
@@ -198,10 +204,10 @@ class InputProcessor(object):
         
         if self.clients_list:
             client = filter(lambda c_ip: c_ip["client_ip"] == client_data['client_ip'], self.clients_list) 
-        if client:    
-            client_index = self.clients_list.index(client[0])
-            self.clients_list[client_index] = {"client_ip": client_data['client_ip'], "total_hb": client_data['total_hb'], "time": client_data['time']}
-            return True
+            if client:    
+                client_index = self.clients_list.index(client[0])
+                self.clients_list[client_index] = {"client_ip": client_data['client_ip'], "total_hb": client_data['total_hb'], "time": client_data['time']}
+                return ("client_ip", client_data['client_ip'])
         else:
             self.clients_list.append({"client_ip": client_data['client_ip'], "total_hb": client_data['total_hb'], "time": client_data['time']})
             return False
@@ -230,7 +236,8 @@ class InputProcessor(object):
         tb_db_map = table_config.db_tb_index_map
         db_data = table_config.db_data
         db_info = filter(lambda tb_db: tb_db["db_index"] == 0, tb_db_map)[0] 
-        db_name = db_data["db_name"]
+        db_name = db_info["db_name"]
+        db_path = db_info["db_path"]
         sql = table_config.sql
         while True:
             if not q.empty():
@@ -241,27 +248,31 @@ class InputProcessor(object):
                 for key in incoming_data.keys():
                     if isinstance(incoming_data[key], unicode):
                         incoming_data[key] = incoming_data[key].encode('utf-8')
-                idata_keys = incoming_data.keys()
+                indata_keys = incoming_data.keys()
                 
-                struct = [incoming_data[key] for key in indata_keys] 
+                struct = tuple([incoming_data[key] for key in indata_keys])
 
                 #Update table which stores all incoming messages
                 tb_name = filter(lambda tb: tb["tb_index"] == 0, db_info["tables"])[0]["tb_name"]
-                tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_info)[0]
-                tb_columns = tb_db_data["tb_columns"] 
-                sql.insertDB(tuple(struct), db_name, tb_name, tb_columns)
+                tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
+                tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
+                LOGGER.debug("process_fifo_data calling insertDB with {} {} {}".format(db_name, tb_name, tb_columns))
+                sql.insertDB(struct, db_path, tb_name, tb_columns)
                 
                 #Active Clients setup
                 tb_name = filter(lambda tb: tb["tb_index"] == 1, db_info["tables"])[0]["tb_name"]
-                tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_info)[0]
-                tb_columns = tb_db_data["tb_columns"] 
+                tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
+                tb_update_mode = tb_db_data["tb_update_mode"]
+                tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
 
-                struct = [incoming_data[columns] for column in tb_columns]
-
-                if self.check_client_present(incoming_data):
-                    sql.updateDB(struct, ("client_ip", struct["client_ip"]), db_name, tb_name)
+                result = self.check_client_present(incoming_data)
+                if result: 
+                    struct = [(column, incoming_data[column]) for column in tb_update_mode]
+                    sql.updateDB(struct, result, db_path, tb_name)
                 else:
-                    sql.insertDB(sqlstruct, ACTIVE_CLIENTS)
+                    struct = tuple([incoming_data[column] for column in tb_columns])
+                    sql.insertDB(struct, db_path, tb_name, tb_columns)
+
 
             else:
                 LOGGER.warning("Queue is empty; no events to process")
