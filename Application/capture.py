@@ -90,9 +90,22 @@ if __name__=="__main__":
     args = parser.parse_args()
     captures = args.capture
     
-    logging.basicConfig(filename='%scapture.log'%LOG_PATH, level=logging.INFO)
+    #Create and configure the LOGGER
+    LOGGER.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    ch = logging.StreamHandler()
+    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
+    ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
+
     if args.verbosity:
-        logging.getLogger().setLevel(logging.INFO)
+        print "VERBOSE MODE"
+        ch.setLevel(logging.DEBUG)
+    else:
+        ch.setLevel(logging.WARNING)
+    
+    LOGGER.addHandler(ch)
+    LOGGER.addHandler(fh)
         
     #Initialize the camera object
     c = Camera()
