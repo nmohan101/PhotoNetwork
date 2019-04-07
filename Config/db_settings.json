@@ -1,0 +1,64 @@
+{
+    "_comment" : "Database configuration File",
+    "Databases": [{
+                    "db_name"  : "PhotoNetwork.db",
+                    "db_dir"   : "/srv/PhotoNetwork/",
+                    "db_index" : 0,
+                    "db_tables": [{
+                                    "tb_name"        : "All_Messages",
+                                    "tb_index"       : 0,
+                                    "tb_update_mode" : "all",
+                                    "tb_columns"     : [{
+                                                          "cl_name" : "id",
+                                                          "cl_type" : "integer",
+                                                          "cl_parm" : "PRIMARY KEY"
+                                                        },
+                                                        {
+                                                          "cl_name" : "client_ip",
+                                                          "cl_type" : "text",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }, 
+                                                        {
+                                                          "cl_name" : "total_hb",
+                                                          "cl_type" : "integer",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }, 
+                                                        {
+                                                          "cl_name" : "type",
+                                                          "cl_type" : "text",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }, 
+                                                        {
+                                                          "cl_name" : "time",
+                                                          "cl_type" : "text",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }]
+                                  },
+                                  {
+                                    "tb_name"        : "Active_Clients",
+                                    "tb_index"       : 1,
+                                    "tb_update_mode" : ["total_hb", "time"],
+                                    "tb_columns"     : [{
+                                                          "cl_name" : "id",
+                                                          "cl_type" : "integer",
+                                                          "cl_parm" : "PRIMARY KEY"
+                                                        },
+                                                        {
+                                                          "cl_name" : "client_ip",
+                                                          "cl_type" : "text",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }, 
+                                                        {
+                                                          "cl_name" : "total_hb",
+                                                          "cl_type" : "integer",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }, 
+                                                        {
+                                                          "cl_name" : "time",
+                                                          "cl_type" : "text",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }]
+                                  }]
+
+                 }]
+}

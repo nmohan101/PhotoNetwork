@@ -7,7 +7,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technlogies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import datetime
 import json
 import logging
@@ -18,17 +20,23 @@ import time
 import sys
 import pwd
 
-#*******Constants*****************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 IP_ADDRESS = "192.168.0"
 IP_LIST = {}
 LOG_PATH = "/var/log/PhotoNetwork/"
 UID = pwd.getpwuid(os.getuid()).pw_uid
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 
-def run():
+
+#---------------------------------------------------#
+#                 Start of Program                  #
+#---------------------------------------------------#
+def run(upper_value):
     while True:
         logger.debug("Executing simulation")
-        net_value = random.randint(0,10)
+        net_value = random.randint(0, upper_value)
         ip_address = "%s.%d"%(IP_ADDRESS, net_value)
 
         if not ip_address in IP_LIST:
@@ -55,14 +63,14 @@ class FIFO(object):
 if __name__=="__main__": 
     #Parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbosity', action = "store_true",  
-                        help = "Enter -v for verbosity")
+    parser.add_argument('-v', '--verbosity', action = "store_true", help = "Enter -v for verbosity")
+    parser.add_argument('-r', '--random', default = 10, required = False, help = 'Enter the number of unique ips to be broadcasted') 
     args = parser.parse_args()
     
     #Create and configure the logger
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()
     fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
     ch.setFormatter(formatter)
@@ -77,4 +85,5 @@ if __name__=="__main__":
     logger.addHandler(ch)
     logger.addHandler(fh)
     fi = FIFO()
-    run()
+    run(int(args.random))
+

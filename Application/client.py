@@ -7,7 +7,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technlogies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import socket
 from threading import Thread
 import datetime
@@ -17,11 +19,16 @@ import sys
 import logging
 import argparse
 import os
-#********Local Imports************
+
+#---------------------------------------------------#
+#                   Local Imports                   #
+#---------------------------------------------------#
 import asynctimer
 import getip
 
-#**************Constants***********
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 PORT_TXRX = 5580
 LISTEN_PORT = 5560
 MULTICAST_PORT = 5570
@@ -29,6 +36,9 @@ MULTICAST_IP = "224.1.1.1"
 LOG_PATH = "/var/log/PhotoNetwork/"
 
 
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class client_udp(object):
     
     def __init__(self):
@@ -120,7 +130,7 @@ if __name__=="__main__":
     #Create and configure the logger
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()  
     fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0]))
     ch.setFormatter(formatter)

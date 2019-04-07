@@ -8,7 +8,9 @@ __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technologies"
 """
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import socket
 from threading import Thread
 import json
@@ -18,10 +20,16 @@ import argparse
 import os
 import sys
 import pwd
-#********Local Imports************
+
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 import asynctimer
 
-#******Constants********************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
+SETTINGS_FILE = "/etc/PhotoNetwork/network_settings.json"
 BROADCAST_PORT = 5560
 MULTICAST_PORT = 5570
 LISTEN_PORT = 5580
@@ -31,6 +39,9 @@ SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 LOG_PATH = "/var/log/PhotoNetwork/"
 
 
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class UDP(object):
     
     def __init__(self):
@@ -61,7 +72,7 @@ class FIFO(object):
     def __init__(self):
         if os.path.exists(SERVER_FIFO):
             os.system("rm %s"%SERVER_FIFO) 
-	print SERVER_FIFO
+        print SERVER_FIFO
         os.mkfifo(SERVER_FIFO)
         
     def write(self, data):
@@ -69,7 +80,7 @@ class FIFO(object):
         fifo.write(data)
         fifo.close()
 
-class MAIN(object):
+class server(object):
     def __init__(self):
         self.sys_exit = False
 
@@ -103,7 +114,7 @@ if __name__== "__main__":
     #Create and configure the logger
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()
     fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0]))
     ch.setFormatter(formatter)
@@ -120,7 +131,7 @@ if __name__== "__main__":
     
     #Configure and run the main program
     u = UDP()
-    mn = MAIN()
+    mn = server()
     fifo = FIFO()
     brdcast = asynctimer.AsyncTimer(10, u._broadcast)
     brdcast.start()

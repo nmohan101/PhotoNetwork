@@ -8,16 +8,24 @@ __copyright__   = "Copy Right 2018. NM Technologies"
 """
 
 
-#********System Imports************
+#---------------------------------------------------#
+#                   System Imports                  #
+#---------------------------------------------------#
 import subprocess
 from threading import Thread
 import logging
 import json
 import time
 
-#*******Constants******************
+#---------------------------------------------------#
+#                   Constants                       #
+#---------------------------------------------------#
 SETTINGS_FILE = "/etc/PhotoNetwork/network_settings.json"
 
+
+#---------------------------------------------------#
+#                   Start of Program                #
+#---------------------------------------------------#
 class config(object):
 	def __init__(self):
 		self.settings_data = self._getsettings()
@@ -42,7 +50,7 @@ class controller(object):
         if config.sim == True:
             events = subprocess.Popen(["python", config.test_path + "event_simulator.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time.sleep(1)
-            handler = subprocess.Popen(["python", config.app_path + "event_handler.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            handler = subprocess.Popen(["python", config.app_path + "event_handler.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             while True:
                 if  events.poll() != None:
                     print "event_handler.py is no longer running"
