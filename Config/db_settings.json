@@ -14,11 +14,6 @@
                                                           "cl_parm" : "PRIMARY KEY"
                                                         },
                                                         {
-                                                          "cl_name" : "type",
-                                                          "cl_type" : "text",
-                                                          "cl_parm" : "NOT NULL"
-                                                        }, 
-                                                        {
                                                           "cl_name" : "client_ip",
                                                           "cl_type" : "text",
                                                           "cl_parm" : "NOT NULL"
@@ -26,6 +21,11 @@
                                                         {
                                                           "cl_name" : "total_hb",
                                                           "cl_type" : "integer",
+                                                          "cl_parm" : "NOT NULL"
+                                                        }, 
+                                                        {
+                                                          "cl_name" : "type",
+                                                          "cl_type" : "text",
                                                           "cl_parm" : "NOT NULL"
                                                         }, 
                                                         {

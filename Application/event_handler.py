@@ -53,8 +53,8 @@ class TableConfig(object):
         #\Input: N/A
         #\Function: Read the db settings json file and load as dict object
         #\Output: json file object
-
-        LOGGER.debug("Reading db_settings file %s"%DB_SETTINGS)
+        
+        LOGGER.debug("Read db_settings file %s"%DB_SETTINGS)
         db_settings_file = open(DB_SETTINGS, "r")
         db_settings = db_settings_file.read()
         db_settings_file.close()
@@ -136,8 +136,10 @@ class SQL(object):
 
         for item in sqlstruct:
             struct += "?, "
-         
-        return struct[:len(struct)-2] + ")"
+
+        final_struct = struct[:len(struct)-2] + ")"
+        LOGGER.debug("Created input_struct {}".format(final_struct))
+        return final_struct 
                  
     def _update_input_struct(self, columns, table, update_arg):
         #\Input: columns to be updated, table name and search criteria
@@ -155,7 +157,10 @@ class SQL(object):
         struct_1 = struct_1[:-2]
         skel_struct = struct_1 + struct_2
         update_struct.append(update_arg[1])
-        return skel_struct, tuple(update_struct)
+
+        final_struct  = skel_struct, tuple(update_struct)
+        LOGGER.debug("Update sturct created {}".format(final_struct))
+        return final_struct
          
     def insertDB(self, sqlstruct, db_file, table, tb_columns):
         #\Input: Input Data, Table Name
@@ -163,13 +168,12 @@ class SQL(object):
         #\Output: N/A
 
         conn = sqlite3.connect(db_file)
-        print db_file
         input_struct = self._insert_input_struct(sqlstruct, table, tb_columns)
-        print (input_struct, sqlstruct)
         conn.cursor().execute(input_struct, sqlstruct)
         conn.commit()
         conn.close()
-        LOGGER.debug("Data: {} Written to Table: {} into database".format(input_struct, table))
+        LOGGER.debug("Data: {} Written to Table: {} into database"
+                    .format(input_struct, table))
 
     def removeDB(self, column, arg, db_file, table):
         #\Input column name, value , table name
@@ -178,7 +182,11 @@ class SQL(object):
         
         conn = sqlite3.connect(db_file)
         input_struct = "DELETE FROM %s WHERE %s = ?"%(table, column)
+        LOGGER.debug("Executing deletion from database {} {}"
+                    .format(input_struct, arg))
         conn.cursor().execute(input_struct, arg)
+        conn.commit()
+        conn.close()
 
     def updateDB(self, columns, update_arg, db_file, table):
         #\Input Columns to be updated, search criteria, table name
@@ -201,15 +209,17 @@ class InputProcessor(object):
         #\Input: client_data (client_ip, total_heartbeats, time)
         #\Function: Check if clients list has the input ip. Add if not.
         #\Output: True if ip was found in list and false if ip was not found
-        
-        if self.clients_list:
-            client = filter(lambda c_ip: c_ip["client_ip"] == client_data['client_ip'], self.clients_list) 
-            if client:    
-                client_index = self.clients_list.index(client[0])
-                self.clients_list[client_index] = {"client_ip": client_data['client_ip'], "total_hb": client_data['total_hb'], "time": client_data['time']}
-                return ("client_ip", client_data['client_ip'])
+        LOGGER.debug("Check if client present {}".format(client_data)) 
+        client = filter(lambda c_ip: c_ip["client_ip"] == client_data['client_ip'], self.clients_list) 
+        if client:    
+            client_index = self.clients_list.index(client[0])
+            self.clients_list[client_index] = {"client_ip": client_data['client_ip'], "total_hb": client_data['total_hb'], "time": client_data['time']}
+            LOGGER.debug("Client present {}".format(client_data["client_ip"])) 
+            return ("client_ip", client_data['client_ip'])
+
         else:
             self.clients_list.append({"client_ip": client_data['client_ip'], "total_hb": client_data['total_hb'], "time": client_data['time']})
+            LOGGER.debug("Client NOT present {}".format(client_data["client_ip"])) 
             return False
 
     def inactive_detection(self):
@@ -218,13 +228,19 @@ class InputProcessor(object):
         #\Output: If client has been active for longer than 120s remove from db, if not do nothing
 
         current_time = dt.datetime.now()
-        inactive_clients = filter(lambda client: current_time - dt.strptime(client["time"]) > 120, self.clients_list)
+        inactive_clients = filter(lambda client: 
+                                  (current_time - dt.datetime.strptime(client["time"], 
+                                  "%Y-%m-%d %H:%M:%S.%f")).total_seconds() > 120.00, 
+                                  self.clients_list)
 
         if inactive_clients:
-                for inact in inactive_clients:
-                    client_index = self.clients_list.index(inact)
-                    del self.clients_list[client_index]
-                    sql.removeDB("client_ip", inact["client_ip"], ACTIVE_CLIENTS)
+            LOGGER.warning("Inactive clients found {}".format(inactive_clients))
+            for inact in inactive_clients:
+                client_index = self.clients_list.index(inact)
+                del self.clients_list[client_index]
+                return inactive_clients
+        else:
+            return False
 
         
     def process_fifo_data(self):
@@ -256,7 +272,7 @@ class InputProcessor(object):
                 tb_name = filter(lambda tb: tb["tb_index"] == 0, db_info["tables"])[0]["tb_name"]
                 tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
                 tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
-                LOGGER.debug("process_fifo_data calling insertDB with {} {} {}".format(db_name, tb_name, tb_columns))
+                LOGGER.debug("insertDB with {} {} {}".format(db_name, tb_name, tb_columns))
                 sql.insertDB(struct, db_path, tb_name, tb_columns)
                 
                 #Active Clients setup
@@ -267,13 +283,19 @@ class InputProcessor(object):
 
                 result = self.check_client_present(incoming_data)
                 if result: 
+                    LOGGER.debug("IP {} found in records. Updateing table with new information".format(result))
                     struct = [(column, incoming_data[column]) for column in tb_update_mode]
                     sql.updateDB(struct, result, db_path, tb_name)
                 else:
+                    LOGGER.debug("IP {} NOT found in records. Inserting as new record".format(incoming_data["client_ip"]))
                     struct = tuple([incoming_data[column] for column in tb_columns])
                     sql.insertDB(struct, db_path, tb_name, tb_columns)
 
-
+                #Check if there are any inactive clients
+                result = self.inactive_detection()
+                if result:
+                    for client in result:
+                        sql.removeDB("client_ip", (client["client_ip"], ), db_path, tb_name)
             else:
                 LOGGER.warning("Queue is empty; no events to process")
             time.sleep(1)
@@ -285,7 +307,7 @@ def read_fifo():
 
     while True:
         fifoData = open(SERVER_fifo, "r")
-        LOGGER.debug("Data in fifo, writing to Queue") 
+        LOGGER.debug("Data in fifo, putting to Queue") 
         q.put(fifoData.read())
         fifoData.close()
         time.sleep(1)
@@ -300,7 +322,7 @@ if __name__ == '__main__':
     
     #Create and configure the LOGGER
     LOGGER.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()
     fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
     ch.setFormatter(formatter)
