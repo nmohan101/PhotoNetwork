@@ -19,7 +19,7 @@ import logging
 #                   Constants                       #
 #---------------------------------------------------#
 LOG_PATH = "/var/log/"
-CAM_SETTINGS = "/etc/PhotoNetwork/cam_settings"
+CAM_SETTINGS = "/etc/PhotoNetwork/cam_settings.config"
 
 class Camera(object):
     
