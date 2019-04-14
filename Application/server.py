@@ -20,11 +20,13 @@ import argparse
 import os
 import sys
 import pwd
+import time
 
 #---------------------------------------------------#
-#                   Constants                       #
+#                   Local Imports                   #
 #---------------------------------------------------#
 import asynctimer
+import getip
 
 #---------------------------------------------------#
 #                   Constants                       #
@@ -36,6 +38,7 @@ LISTEN_PORT = 5580
 MULTICAST_IP = "224.1.1.1"
 UID = pwd.getpwuid(os.getuid()).pw_uid
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
+MULTI_FIFO = "/var/run/user/%s/multi.fifo"%UID
 LOG_PATH = "/var/log/PhotoNetwork/"
 
 
@@ -48,8 +51,9 @@ class UDP(object):
         self.sock_b = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock_m = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock_l = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.ip = ""
+        self.ip = str(getip.get_local_ip())
         self.bc_msg_counter = 0
+        self._config_multicast()
     
     def _broadcast(self):
         bcast_message = {"type": "host_broadcast", "total_bc": self.bc_msg_counter, "hostname": socket.gethostname(), "time": str(datetime.datetime.now())}
@@ -58,23 +62,33 @@ class UDP(object):
         self.sock_b.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.sock_b.sendto(data, ('255.255.255.255',BROADCAST_PORT))
         self.bc_msg_counter += 1
-
-    def _multicast(self):
-        logger.info("Sending multi-cast message")
+    
+    def _config_multicast(self):
+        logger.debug("Configuring Multicast")
         self.sock_m.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.ip))
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
         membership_request = socket.inet_aton(MULTICAST_IP) + socket.inet_aton(self.ip)
         self.sock_m.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, membership_request)
-        self.sock_m.sendto("Hello",(MULTICAST_IP, MULTICAST_PORT))
+
+    def multicast(self, command):
+        logger.info("Sending multi-cast message {}".format(command))
+        self.sock_m.sendto(command,(MULTICAST_IP, MULTICAST_PORT))
 
 class FIFO(object):
     def __init__(self):
         if os.path.exists(SERVER_FIFO):
             os.system("rm %s"%SERVER_FIFO) 
-        print SERVER_FIFO
         os.mkfifo(SERVER_FIFO)
         
+    def read(self):
+        logger.debug("Checking for fifo_data")
+        fifoData = open(MULTI_FIFO, "r")
+        command = fifoData.read()
+        logger.debug("Found data in %s file"%MULTI_FIFO) 
+        fifoData.close()
+        return command
+
     def write(self, data):
         fifo = open(SERVER_FIFO, "w")
         fifo.write(data)
@@ -85,8 +99,24 @@ class server(object):
         self.sys_exit = False
 
     def exits(self):
-        inp = raw_input("PRESS ANY KEY TO EXIT\n")
-        self.sys_exit = True
+        while True:
+            default_message = ['python', "/opt/PhotoNetwork/Application/capture.py", "-v", "-c"]
+            inp = raw_input("Enter exit to close or message for multicast\n")
+            logger.debug("User input is: {}".format(inp))
+            if inp == 'exit':
+                self.sys_exit = True
+            else: 
+                default_message.append(inp)
+                u.multicast(str(default_message))
+
+    def wait_for_multi(self):
+        while True:
+            command = fifo.read()
+            if command:
+                logger.debug("Command rx - Sending to Clients {}".format(command))
+                u.multicast(command)
+                command = None
+            time.sleep(0.5)
 
     def main(self,listen):
         listen.settimeout(20)
@@ -116,7 +146,7 @@ if __name__== "__main__":
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0]))
+    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
     
@@ -135,7 +165,12 @@ if __name__== "__main__":
     fifo = FIFO()
     brdcast = asynctimer.AsyncTimer(10, u._broadcast)
     brdcast.start()
-    Thread(target=mn.exits).start()
+    et = Thread(target=mn.exits)
+    wt = Thread(target=mn.wait_for_multi)
+    et.daemon = True 
+    wt.daemon = True
+    et.start()
+    wt.start()
     mn.main(u.sock_l)
 
     #Shutdown Sequence

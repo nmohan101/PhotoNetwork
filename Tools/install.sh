@@ -12,10 +12,14 @@ DEST_BASE_DIR=/opt/PhotoNetwork
 DEST_APP_PATH=$DEST_BASE_DIR/Application
 DEST_WEB_PATH=$DEST_BASE_DIR/FrontEnd
 DEST_CONFIG_PATH=/etc/PhotoNetwork
-SOURCE_APP_PATH=~/Documents/PhotoNetwork/Application
-SOURCE_WEB_PATH=~/Documents/PhotoNetwork/FrontEnd
-SOURCE_CONFIG_PATH=~/Documents/PhotoNetwork/Config
+SOURCE_APP_PATH=../Application
+SOURCE_WEB_PATH=../FrontEnd
+SOURCE_CONFIG_PATH=../Config
 DEFAULT_OUT_DIR=/usr/PhotoNetwork
+DEST_DB_PATH=/srv/PhotoNetwork
+DEST_LOG_PATH=/var/log/PhotoNetwork
+GREEN='\e[32m'
+NC='\e[0m'
 
 
 #-----------------------------------#
@@ -59,7 +63,7 @@ copy () {
         filename=${file##*/}
         if [ -f $file ]; then
             if ! cmp -s $file $2/$filename; then
-                echo "Copying ..... $filename"
+                echo -e "${GREEN}Copying ..... $filename${NC}"
                 rsync -a $file $2/
             else
                 echo "$2/$filename ........ upto date"
@@ -82,6 +86,17 @@ dir_copy () {
         fi
     done
 }
+
+
+mkdir_photo (){
+
+    if ! [ -d $1 ]; then
+        echo "Making Directory....$1"
+        mkdir $1
+        chmod 777 $1
+    fi
+}
+
 
 settings () {
     echo "Updating system mode to: $MODE"
@@ -121,10 +136,9 @@ else
     chmod -R 777 $DEST_CONFIG_PATH
 fi
 
-#Ensure output directory for captures is present (If not create it)
-if ! [ -d $DEFAULT_OUT_DIR ]; then
-    echo "Making Directory..... $DEFAULT_OUT_DIR"
-    mkdir $DEFAULT_OUT_DIR
-    chmod 777 $DEFAULT_OUT_DIR
-fi
-    
+#Ensure required output directories for logs, db and capture are present
+mkdir_photo $DEFAULT_OUT_DIR
+mkdir_photo $DEST_DB_PATH
+mkdir_photo $DEST_LOG_PATH
+ 
+echo "**************** PhotoNetwork Install Complete*************************"
