@@ -10,5 +10,5 @@
 PROCESS="server.py client.py"
 
 for p in $PROCESS; do
-	pkill -f $p
+    kill -9 $p
 done

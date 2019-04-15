@@ -18,6 +18,7 @@ import struct
 import sys
 import logging
 import argparse
+import subprocess
 import os
 
 #---------------------------------------------------#
@@ -54,6 +55,7 @@ class client_udp(object):
         self.sock_txrx.settimeout(30)                        #Set the socket timeout to 30 seconds 
         self.sock_txrx.bind(('', LISTEN_PORT))               #Bind socket to broadcast listening port
         self.host_status = False                             #Flag - True if Master is found and False if Master is not found
+        self._config_multicast()
     
       
     def  find_host(self, sys_exit):
@@ -81,12 +83,24 @@ class client_udp(object):
         cu.sock_txrx.sendto(data, (cu.master_ip, PORT_TXRX))
         cu.package_counter += 1
     
-    def multi_listen(self):
+    def _config_multicast(self):
+        logger.debug("Configuring multicast")
         mreq = struct.pack("4sl", socket.inet_aton(MULTICAST_IP), socket.INADDR_ANY)
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        
+
+    def multi_listen(self):
         while True:
-            logger.info(self.sock_multi.recv(10240))
+            logger.debug("Listening for multi-cast message from Host")
+            rx_data = eval(self.sock_multi.recv(10240))
+            logger.info("Action message rx from host - {}".format(rx_data))
+
+            try:
+                proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                stdout, stderr = proc.communicate()
+                logger.info(stdout)
+            except subprocess.CalledProcessError:
+                raise
+
 
 class controller(object):
     
@@ -100,10 +114,13 @@ class controller(object):
 
     def status_controller(self):
         host_finder = Thread(target=cu.find_host, args=(self.sys_exit,))
+        multi_listen = Thread(target=cu.multi_listen)
+        host_finder.daemon = True
+        multi_listen.daemon = True
         host_finder.start()
+        multi_listen.start()
         heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         
-
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
                 logger.info("START SENDING HEARTBEATS")
@@ -112,7 +129,7 @@ class controller(object):
             elif (cu.host_status == False and self.heartbeat_active == True):
                 heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
                 self.heartbeat_active = False
-                logger.warning("STATUS - LOST CONNECTION")
+                logger.warning("STATUS - LOST CONNECTION TO HOST")
                 
         logger.warning("SHUTDOWN EXECUTED")
         heartbeat.stop() 
@@ -132,7 +149,7 @@ if __name__=="__main__":
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()  
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split(".")[0]))
+    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
     ch.setFormatter(formatter)
     fh.setFormatter(formatter)
     
@@ -148,9 +165,10 @@ if __name__=="__main__":
     #Initialize the UDP class
     cu = client_udp()
     cntrl = controller()
-    Thread(target=cntrl.exits).start()
+    et = Thread(target=cntrl.exits)
+    et.daemon = True 
+    et.start()
 
-    
     #Call status controller
     cntrl.status_controller()
 
