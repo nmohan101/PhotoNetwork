@@ -72,15 +72,25 @@ class controller(object):
     def user_input(self):
         exit = False
         while exit == False:
+            print "PhotoNetwork Application started. Enter exit to end at any time"
             default_message = ['python', config.app_path + "capture.py", "-v", "-c"]
-            inp = raw_input("Enter number of captures to be taken or enter exit to close program\n")
+
+            if self.server_mode:
+                inp = raw_input("Enter number of captures to be taken:\n")
+            else:
+                inp = raw_input("\n")
+
             logger.debug("User input is: {}".format(inp))
             if inp == 'exit':
                 exit = True
             else: 
-                default_message.append(inp)
-                logger.info("Sending multicast message to clients {}".format(default_message))
-                fifo.write(str(default_message))
+                try:
+                    imp = int(inp)
+                    default_message.append(inp)
+                    logger.info("Sending multicast message to clients {}".format(default_message))
+                    fifo.write(str(default_message))
+                except ValueError:
+                    log.warning("Invalid input. Number of captures must be an integer")
 
     def monitor(self):
         if config.mode == 'server' and config.sim:
@@ -127,11 +137,9 @@ class controller(object):
                 raise
                 sys.exit(1)
 
-        uit = None
-        if self.server_mode:
-            uit = Thread(target=self.user_input)
-            uit.daemon = True 
-            uit.start()
+        uit = Thread(target=self.user_input)
+        uit.daemon = True 
+        uit.start()
 
         while True:
             for proc in self.active_process:

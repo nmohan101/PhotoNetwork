@@ -18,6 +18,7 @@ import struct
 import sys
 import logging
 import argparse
+import subprocess
 import os
 
 #---------------------------------------------------#
@@ -90,8 +91,16 @@ class client_udp(object):
     def multi_listen(self):
         while True:
             logger.debug("Listening for multi-cast message from Host")
-            incoming_data = self.sock_multi.recv(10240)
-            logger.info(incoming_data)
+            rx_data = eval(self.sock_multi.recv(10240))
+            logger.info("Action message rx from host - {}".format(rx_data))
+
+            try:
+                proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                stdout, stderr = proc.communicate()
+                logger.info(stdout)
+            except subprocess.CalledProcessError:
+                raise
+
 
 class controller(object):
     
