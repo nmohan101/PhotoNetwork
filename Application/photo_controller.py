@@ -73,7 +73,7 @@ class controller(object):
         exit = False
         while exit == False:
             print "PhotoNetwork Application started. Enter exit to end at any time"
-            default_message = ['python', config.app_path + "capture.py", "-v", "-c"]
+            default_message = ['python', config.app_path + "capture.pyc", "-v", "-c"]
 
             if self.server_mode:
                 inp = raw_input("Enter number of captures to be taken:\n")
@@ -95,32 +95,32 @@ class controller(object):
     def monitor(self):
         if config.mode == 'server' and config.sim:
             try:
-                logger.info("Starting: event_simulator.py")
-                events = subprocess.Popen(["python", config.test_path + "event_simulator.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                logger.info("Starting: event_simulator.pyc")
+                events = subprocess.Popen(["python", config.test_path + "event_simulator.pyc", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 stdout, stderr = events.communicate()
                 self.active_process.append(events)
                 self.event_handler = True
                 self.sim_mode = True
-            except:
+            except subprocess.CalledProcessError:
                 raise
                 sys.exit(1)
         elif config.mode == 'server' and config.sim == False:
             try:
-                logger.info("Starting: server.py")
-                server = subprocess.Popen(["python", config.app_path + "server.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                logger.info("Starting: server.pyc")
+                server = subprocess.Popen(["python", config.app_path + "server.pyc", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 self.active_process.append(server)
                 self.event_handler = True
                 self.server_mode = True
-            except:
+            except subprocess.CalledProcessError:
                 raise
                 sys.exit(1)
         elif config.mode == 'client':
             try:
-                logger.info("Starting: client.py")
-                client = subprocess.Popen(["python", config.app_path + "client.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                logger.info("Starting: client.pyc")
+                client = subprocess.Popen(["python", config.app_path + "client.pyc", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 self.active_process.append(client)
                 self.event_handler = False
-            except:
+            except subprocess.CalledProcessError:
                 raise
                 sys.exit(1)
         else:
@@ -130,10 +130,10 @@ class controller(object):
         if self.event_handler:
             time.sleep(1)
             try:
-                logger.info("Starting: event_handler.py")
-                handler = subprocess.Popen(["python", config.app_path + "event_handler.py", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                logger.info("Starting: event_handler.pyc")
+                handler = subprocess.Popen(["python", config.app_path + "event_handler.pyc", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 self.active_process.append(handler)
-            except:
+            except subprocess.CalledProcessError:
                 raise
                 sys.exit(1)
 
