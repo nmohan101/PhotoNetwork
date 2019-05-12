@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+	<meta charset="utf-8">
+	<title>example</title>
+  </head>
+  <body>
+      <table class="hoverTable">
+        {# comment #}
+        <tr>
+          <th>ID</th>
+          <th>Client IP</th>
+          <th>Total HB</th>
+          <th>Time</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+          <td>{{user.user_id}}</td>
+          <td>{{user.client_ip}}</td>
+          <td>{{user.total_hb}}</td>
+          <td>{{user.time}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+	  </body>
+
+  </html>
