@@ -23,45 +23,18 @@ __copyright__   = "Copy Right 2018. NM Technologies"
 #define FIFO_PATH "/var/run/user/"
 #define FIFO_FILE "multi.fifo"
 
-//------ Start of Program ------/((/((
+//----------- Prototype ----------//
+void print_usage(int es);
+void write_fifo(char *captures);
 
-void print_usage(int es)
-{
-    printf("Usage: # of captures -c <captures> || help -h\n");
-    exit(es);
-}
-
-void write_fifo(char *captures)
-{
-    //Initialize variables
-    FILE *fp;
-    char uid[6];
-    int path_size = sizeof(FIFO_PATH) + sizeof(uid) + sizeof(FIFO_FILE);
-    int fifo_size = sizeof(FIFO_WRITE_MESSAGE) + sizeof(captures);
-    char *fifo_path = malloc(path_size);
-    char *fifo_message = malloc(fifo_size);
-    
-    //Get folder path for fifo file
-    sprintf(uid, "%d", getuid());
-    snprintf(fifo_path, path_size, "%s%s/%s", FIFO_PATH, uid, FIFO_FILE);
-    snprintf(fifo_message, fifo_size, "%s %s", FIFO_WRITE_MESSAGE, captures);
-
-    //Write to Fifo File
-    mkfifo(fifo_path, 0666);
-    fp = fopen(fifo_path, "w");
-    fprintf(fp, "%s", fifo_message);
-    fclose(fp);
-
-    //Free Allocated memmory
-    free(fifo_path);
-    free(fifo_message);
-}
+//------ Start of Program ------//
 
 int main (int argc, char *argv[])
 {
-    
+    //Initialize Variables
     int opt;
 
+    //Parse input arguments and take appropriate action
     if (argc == 2)
     {
         while ((opt = getopt(argc, argv, "hc:")) != -1)
@@ -95,3 +68,34 @@ int main (int argc, char *argv[])
     return 0;
 }
 
+void print_usage(int es)
+{
+    printf("Usage: # of captures -c <captures> || help -h\n");
+    exit(es);
+}
+
+void write_fifo(char *captures)
+{
+    //Initialize variables
+    FILE *fp;
+    char uid[6];
+    int path_size = sizeof(FIFO_PATH) + sizeof(uid) + sizeof(FIFO_FILE);
+    int fifo_size = sizeof(FIFO_WRITE_MESSAGE) + sizeof(captures);
+    char *fifo_path = malloc(path_size);
+    char *fifo_message = malloc(fifo_size);
+    
+    //Get folder path for fifo file
+    sprintf(uid, "%d", getuid());
+    snprintf(fifo_path, path_size, "%s%s/%s", FIFO_PATH, uid, FIFO_FILE);
+    snprintf(fifo_message, fifo_size, "%s %s", FIFO_WRITE_MESSAGE, captures);
+
+    //Write to Fifo File
+    mkfifo(fifo_path, 0666);
+    fp = fopen(fifo_path, "w");
+    fprintf(fp, "%s", fifo_message);
+    fclose(fp);
+
+    //Free Allocated memmory
+    free(fifo_path);
+    free(fifo_message);
+}
