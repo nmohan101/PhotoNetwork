@@ -1,10 +1,8 @@
 
-  
-
-
 .hoverTable{
   width:100%; 
   border-collapse:collapse; 
+  margin:7px;
 }
 .hoverTable td{ 
   padding:7px; border:#4e95f4 1px solid;
@@ -18,3 +16,10 @@
     background-color: #ffff99;
 }
 
+#myInput {
+  width: 100%; /* Full-width */
+  font-size: 16px; /* Increase font-size */
+  padding: 12px 20px 12px 40px; /* Add some padding */
+  border: 1px solid #ddd; /* Add a grey border */
+  margin: 12px; /* Add some space below the input */
+}

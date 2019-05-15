@@ -1,12 +1,17 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
       <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+      <script src="{{url_for('static', filename='search.js')}}"></script>
 	<meta charset="utf-8">
 	<title>example</title>
   </head>
   <body>
-      <table class="hoverTable">
+      <input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for names..">
+      <input type="button" id="capture" onClick="myCapture()" value="Capture">
+      <input type="text" id="myInput" placeholder="Capture amount">
+      <table class="hoverTable" id="hoverTable">
         {# comment #}
         <tr>
           <th>ID</th>
@@ -26,3 +31,5 @@
 	  </body>
 
   </html>
+
+
