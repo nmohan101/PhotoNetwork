@@ -1,3 +1,12 @@
+
+/* search.js: This application is responsibe for the in browser search and display of data on the table related to the clients. 
+
+
+__author__      = "Tony Egizii"
+__copyright__   = "Copy Right 2019. Rodaledi Inc"
+
+*/
+
 function myFunction() {
     // Declare variables
     var input, filter, table, tr, td, i, txtValue;
