@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    db = sqlite3.connect("PhotoNetwork.db").cursor()
+    db = sqlite3.connect("/srv/PhotoNetwork/PhotoNetwork.db").cursor()
     rows = db.execute("SELECT id, client_ip, total_hb, time FROM Active_Clients;")
 
     users=[]
