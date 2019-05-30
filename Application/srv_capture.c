@@ -35,7 +35,7 @@ int main (int argc, char *argv[])
     int opt;
 
     //Parse input arguments and take appropriate action
-    if (argc == 2)
+    if (argc == 3)
     {
         while ((opt = getopt(argc, argv, "hc:")) != -1)
         {
@@ -63,6 +63,7 @@ int main (int argc, char *argv[])
     }    
     else
     {
+        printf("No argument provided taking default number of captures\n");
         write_fifo(DEFAULT_CAPTURES);
     }
     return 0;
