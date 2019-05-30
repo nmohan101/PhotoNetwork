@@ -19,6 +19,7 @@ import sys
 #---------------------------------------------------#
 #                   Constants                       #
 #---------------------------------------------------#
+LOG = logging.getLogger(__name__)
 LOG_PATH = "/var/log/PhotoNetwork/"
 CAM_SETTINGS = "/etc/PhotoNetwork/cam_settings.config"
 
@@ -41,7 +42,7 @@ class Camera(object):
         
     def read_cam_settings(self):
         #Read and save camera settings
-        logger.debug("Reading camera settings")
+        LOG.debug("Reading camera settings")
         settings_list = []
         
         with open(CAM_SETTINGS, "r") as f:
@@ -64,7 +65,7 @@ class Camera(object):
             
     def camera_settings(self):
         #Apply Camera settings 
-        logger.debug("Applying camera settings")
+        LOG.debug("Applying camera settings")
         self.camera.resolution = (self.res_width, self.res_height)
         self.camera.sharpness = self.sharpness
         self.camera.contrast = self.contrast
@@ -82,7 +83,7 @@ class Camera(object):
             time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S"))
             self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))
             
-            logger.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
+            LOG.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
 
 if __name__=="__main__":
     
@@ -94,8 +95,7 @@ if __name__=="__main__":
     captures = args.capture
     
     #Create and configure the LOGGER
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    LOG.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler(sys.stdout)
     fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
@@ -108,8 +108,8 @@ if __name__=="__main__":
     else:
         ch.setLevel(logging.WARNING)
     
-    logger.addHandler(ch)
-    logger.addHandler(fh)
+    LOG.addHandler(ch)
+    LOG.addHandler(fh)
         
     #Initialize the camera object
     c = Camera()
