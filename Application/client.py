@@ -30,11 +30,13 @@ import getip
 #---------------------------------------------------#
 #                   Constants                       #
 #---------------------------------------------------#
-PORT_TXRX = 5580
-LISTEN_PORT = 5560
+PORT_TXRX      = 5580
+LISTEN_PORT    = 5560
 MULTICAST_PORT = 5570
-MULTICAST_IP = "224.1.1.1"
-LOG_PATH = "/var/log/PhotoNetwork/"
+MULTICAST_IP   = "224.1.1.1"
+LOG_PATH       = "/var/log/PhotoNetwork/"
+LOG = logging.getLogger(__name__)
+    
 
 
 #---------------------------------------------------#
@@ -58,46 +60,44 @@ class client_udp(object):
         self._config_multicast()
     
       
-    def  find_host(self, sys_exit):
+    def find_host(self):
         
-        while sys_exit==False: 
-            try:
-                data, addr = self.sock_txrx.recvfrom(1024)
-                message = json.loads(data)
-                if message["type"] == "host_broadcast":
-                    self.host_status = True
-                    self.master_hostname = message["hostname"]
-                    self.master_ip = addr[0]
-                    logger.info("rx %s"%data)
-            except socket.timeout:
-                logger.warning("STATUS - MASTER NOT FOUND")
-                self.master_hostname = ""
-                self.master_ip = ""
-                self.host_status = False
-        self.sock_txrx.close()
+        try:
+            data, addr = self.sock_txrx.recvfrom(1024)
+            message = json.loads(data)
+            if message["type"] == "host_broadcast":
+                self.host_status = True
+                self.master_hostname = message["hostname"]
+                self.master_ip = addr[0]
+                LOG.info("rx %s"%data)
+        except socket.timeout:
+            LOG.warning("STATUS - MASTER NOT FOUND")
+            self.master_hostname = ""
+            self.master_ip = ""
+            self.host_status = False
 
     def send_heartbeat(self):
         heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "client_ip": cu.ip, "time": str(datetime.datetime.now())}
         data = json.dumps(heartbeat)
-        logger.info("tx %s"%heartbeat)
+        LOG.info("tx %s"%heartbeat)
         cu.sock_txrx.sendto(data, (cu.master_ip, PORT_TXRX))
         cu.package_counter += 1
     
     def _config_multicast(self):
-        logger.debug("Configuring multicast")
+        LOG.debug("Configuring multicast")
         mreq = struct.pack("4sl", socket.inet_aton(MULTICAST_IP), socket.INADDR_ANY)
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
     def multi_listen(self):
         while True:
-            logger.debug("Listening for multi-cast message from Host")
+            LOG.debug("Listening for multi-cast message from Host")
             rx_data = eval(self.sock_multi.recv(10240))
-            logger.info("Action message rx from host - {}".format(rx_data))
+            LOG.info("Action message rx from host - {}".format(rx_data))
 
             try:
                 proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 stdout, stderr = proc.communicate()
-                logger.info(stdout)
+                LOG.info(stdout)
             except subprocess.CalledProcessError:
                 raise
 
@@ -113,9 +113,8 @@ class controller(object):
         self.sys_exit = True
 
     def status_controller(self):
-        host_finder = Thread(target=cu.find_host, args=(self.sys_exit,))
+        host_finder = asynctimer.AsyncTimer(1, cu.find_host)
         multi_listen = Thread(target=cu.multi_listen)
-        host_finder.daemon = True
         multi_listen.daemon = True
         host_finder.start()
         multi_listen.start()
@@ -123,16 +122,17 @@ class controller(object):
         
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
-                logger.info("START SENDING HEARTBEATS")
+                LOG.info("START SENDING HEARTBEATS")
                 heartbeat.start()
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
                 heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
                 self.heartbeat_active = False
-                logger.warning("STATUS - LOST CONNECTION TO HOST")
+                LOG.warning("STATUS - LOST CONNECTION TO HOST")
                 
-        logger.warning("SHUTDOWN EXECUTED")
+        LOG.warning("SHUTDOWN EXECUTED")
         heartbeat.stop() 
+        host_finder.stop()
         cu.sock_rx.close()
         cu.sock_txrx.close()
         cu.sock_multi.close()
@@ -145,8 +145,7 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     #Create and configure the logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
+    LOG.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     ch = logging.StreamHandler()  
     fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
@@ -159,8 +158,8 @@ if __name__=="__main__":
     else:
         ch.setLevel(logging.WARNING)
     
-    logger.addHandler(ch)
-    logger.addHandler(fh)
+    LOG.addHandler(ch)
+    LOG.addHandler(fh)
     
     #Initialize the UDP class
     cu = client_udp()
