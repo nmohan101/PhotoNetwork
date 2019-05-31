@@ -1,12 +1,3 @@
-"""
-*** app.py: This application is responsibe for opening the database and reading from the tables.
-
-__author__      = "Tony Egizii"
-__copyright__   = "Copy Right 2019. Rodaledi Inc"
-
-***
-"""
-
 #!/usr/bin/env python3
 import sqlite3
 from flask import Flask, render_template
