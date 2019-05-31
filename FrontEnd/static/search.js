@@ -9,7 +9,7 @@ __copyright__   = "Copy Right 2019. Rodaledi Inc"
 
 function myFunction() {
     // Declare variables
-    var input, filter, table, tr, td, i, txtValue;
+    var input, filter, table, tr, i, txtValue;
     input = document.getElementById("myInput");
     filter = input.value.toUpperCase();
     table = document.getElementById("hoverTable");
@@ -17,9 +17,10 @@ function myFunction() {
   
     // Loop through all table rows, and hide those who don't match the search query
     for (i = 0; i < tr.length; i++) {
-      td = tr[i].getElementsByTagName("td")[1];
-      if (td) {
-        txtValue = td.textContent || td.innerText;
+      tds = tr[i].querySelectorAll("td");
+    
+      if (tds.length ) {
+        txtValue = tr[i].innerText.trim();
         if (txtValue.toUpperCase().indexOf(filter) > -1) {
           tr[i].style.display = "";
         } else {
