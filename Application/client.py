@@ -89,17 +89,16 @@ class client_udp(object):
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
     def multi_listen(self):
-        while True:
-            LOG.debug("Listening for multi-cast message from Host")
-            rx_data = eval(self.sock_multi.recv(10240))
-            LOG.info("Action message rx from host - {}".format(rx_data))
+        LOG.debug("Listening for multi-cast message from Host")
+        self.rx_data = eval(self.sock_multi.recv(10240))
+        LOG.info("Action message rx from host - {}".format(self.rx_data))
 
-            try:
-                proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-                stdout, stderr = proc.communicate()
-                LOG.info(stdout)
-            except subprocess.CalledProcessError:
-                raise
+        try:
+            proc = subprocess.Popen(self.rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            stdout, stderr = proc.communicate()
+            LOG.info(stdout)
+        except subprocess.CalledProcessError:
+            raise
 
 
 class controller(object):
@@ -114,11 +113,10 @@ class controller(object):
 
     def status_controller(self):
         host_finder = asynctimer.AsyncTimer(1, cu.find_host)
-        multi_listen = Thread(target=cu.multi_listen)
-        multi_listen.daemon = True
+        multi_listen = asynctimer.AsyncTimer(0.1, cu.multi_listen)
+        heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         host_finder.start()
         multi_listen.start()
-        heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
@@ -133,6 +131,7 @@ class controller(object):
         LOG.warning("SHUTDOWN EXECUTED")
         heartbeat.stop() 
         host_finder.stop()
+        multi_listen.stop()
         cu.sock_rx.close()
         cu.sock_txrx.close()
         cu.sock_multi.close()
