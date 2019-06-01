@@ -21,7 +21,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.
 import event_handler as eh
 
 #---------------------------------------------------#
-#                   Constants                       #
+#                   Start of Program                #
 #---------------------------------------------------#
 
 class TestEventHandler(unittest.TestCase):
