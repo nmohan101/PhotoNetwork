@@ -94,12 +94,13 @@ class client_udp(object):
         self.rx_data = eval(self.sock_multi.recv(10240))
         LOG.info("Action message rx from host - {}".format(self.rx_data))
 
-        try:
-            proc = subprocess.Popen(self.rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            stdout, stderr = proc.communicate()
-            log.info(stdout)
-        except subprocess.CalledProcessError:
-            raise
+            try:
+                proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                stdout, stderr = proc.communicate()
+                log.info(stdout)
+            except subprocess.CalledProcessError:
+                log.error("Unable to execute command %s"%rx_data)
+                raise
 
 
 class controller(object):
