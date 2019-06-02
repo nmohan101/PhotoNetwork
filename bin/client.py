@@ -24,8 +24,10 @@ import os
 #---------------------------------------------------#
 #                   Local Imports                   #
 #---------------------------------------------------#
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/lib")
 import asynctimer
 import getip
+from log import Log
 
 #---------------------------------------------------#
 #                   Constants                       #
@@ -68,9 +70,9 @@ class client_udp(object):
                     self.host_status = True
                     self.master_hostname = message["hostname"]
                     self.master_ip = addr[0]
-                    logger.info("rx %s"%data)
+                    log.info("rx %s"%data)
             except socket.timeout:
-                logger.warning("STATUS - MASTER NOT FOUND")
+                log.warning("STATUS - MASTER NOT FOUND")
                 self.master_hostname = ""
                 self.master_ip = ""
                 self.host_status = False
@@ -79,25 +81,25 @@ class client_udp(object):
     def send_heartbeat(self):
         heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "client_ip": cu.ip, "time": str(datetime.datetime.now())}
         data = json.dumps(heartbeat)
-        logger.info("tx %s"%heartbeat)
+        log.info("tx %s"%heartbeat)
         cu.sock_txrx.sendto(data, (cu.master_ip, PORT_TXRX))
         cu.package_counter += 1
     
     def _config_multicast(self):
-        logger.debug("Configuring multicast")
+        log.debug("Configuring multicast")
         mreq = struct.pack("4sl", socket.inet_aton(MULTICAST_IP), socket.INADDR_ANY)
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
     def multi_listen(self):
         while True:
-            logger.debug("Listening for multi-cast message from Host")
+            log.debug("Listening for multi-cast message from Host")
             rx_data = eval(self.sock_multi.recv(10240))
-            logger.info("Action message rx from host - {}".format(rx_data))
+            log.info("Action message rx from host - {}".format(rx_data))
 
             try:
                 proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
                 stdout, stderr = proc.communicate()
-                logger.info(stdout)
+                log.info(stdout)
             except subprocess.CalledProcessError:
                 raise
 
@@ -123,15 +125,15 @@ class controller(object):
         
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
-                logger.info("START SENDING HEARTBEATS")
+                log.info("START SENDING HEARTBEATS")
                 heartbeat.start()
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
                 heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
                 self.heartbeat_active = False
-                logger.warning("STATUS - LOST CONNECTION TO HOST")
+                log.warning("STATUS - LOST CONNECTION TO HOST")
                 
-        logger.warning("SHUTDOWN EXECUTED")
+        log.warning("SHUTDOWN EXECUTED")
         heartbeat.stop() 
         cu.sock_rx.close()
         cu.sock_txrx.close()
@@ -144,24 +146,9 @@ if __name__=="__main__":
     parser.add_argument('-v', '--verbosity', action = "store_true",  help = "Enter -v for verbosity")
     args = parser.parse_args()
 
-    #Create and configure the logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    ch = logging.StreamHandler()  
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
-    
-    if args.verbosity:
-        print "VERBOSE MODE"
-        ch.setLevel(logging.DEBUG)
-    else:
-        ch.setLevel(logging.WARNING)
-    
-    logger.addHandler(ch)
-    logger.addHandler(fh)
-    
+    #Configure the logger
+    log = Log(sys.argv[0], verbosity=args.verbosity).logger
+
     #Initialize the UDP class
     cu = client_udp()
     cntrl = controller()
