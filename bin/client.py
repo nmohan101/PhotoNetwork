@@ -101,6 +101,7 @@ class client_udp(object):
                 stdout, stderr = proc.communicate()
                 log.info(stdout)
             except subprocess.CalledProcessError:
+                log.error("Unable to execute command %s"%rx_data)
                 raise
 
 

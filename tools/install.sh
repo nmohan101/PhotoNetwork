@@ -9,12 +9,14 @@
 #           Constants              #
 #----------------------------------#
 DEST_BASE_DIR=/opt/PhotoNetwork
-DEST_APP_PATH=$DEST_BASE_DIR/Application
+DEST_APP_PATH=$DEST_BASE_DIR/bin
 DEST_WEB_PATH=$DEST_BASE_DIR/FrontEnd
+DEST_LIB_PATH=$DEST_BASE_DIR/lib
 DEST_CONFIG_PATH=/etc/PhotoNetwork
-SOURCE_APP_PATH=../Application
+SOURCE_APP_PATH=../bin
 SOURCE_WEB_PATH=../FrontEnd
-SOURCE_CONFIG_PATH=../Config
+SOURCE_LIB_PATH=../lib
+SOURCE_CONFIG_PATH=../config
 DEFAULT_OUT_DIR=/usr/PhotoNetwork
 DEST_DB_PATH=/srv/PhotoNetwork
 DEST_LOG_PATH=/var/log/PhotoNetwork
@@ -103,7 +105,7 @@ settings () {
     sed -i -e "s/"\"Network_Mode"\":.*/"\"Network_Mode"\":"\"$MODE"\",/g" $DEST_CONFIG_PATH/network_settings.json
 }
 
-#Copy/Update Application Files
+#Copy/Update bin Files
 if [ -d $DEST_BASE_DIR ]; then
     copy $SOURCE_APP_PATH $DEST_APP_PATH
 else
@@ -112,6 +114,14 @@ else
     copy $SOURCE_APP_PATH $DEST_APP_PATH
 fi
 
+#Copy/Update lib Files
+if [ -d $DEST_BASE_DIR ]; then
+    copy $SOURCE_LIB_PATH $DEST_LIB_PATH
+else
+    echo "Making directory: $DEST_BASE_DIR"
+    mkdir $DEST_BASE_DIR
+    copy $SOURCE_LIB_PATH $DEST_LIB_PATH
+fi
 
 #Copy/Update Front end files
 if [ -d $DEST_WEB_PATH ]; then
@@ -123,7 +133,7 @@ else
 fi
 
 
-#Copy/Update Config Files
+#Copy/Update config Files
 if [ -d $DEST_CONFIG_PATH ]; then
     copy $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
     settings
