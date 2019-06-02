@@ -26,8 +26,8 @@ import datetime as dt
 #---------------------------------------------------#
 #                   Local Imports                   #
 #---------------------------------------------------#
-import asynctimer
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/lib")
+import asynctimer
 from log import Log
 from sql import SQL
 
@@ -102,6 +102,11 @@ class TableConfig(object):
 class InputProcessor(object):
     def __init__(self):
         self.clients_list = []
+        self.tb_db_map = table_config.db_tb_index_map
+        self.db_data = table_config.db_data
+        self.db_info = filter(lambda tb_db: tb_db["db_index"] == 0, self.tb_db_map)[0] 
+        self.db_name = self.db_info["db_name"]
+        self.db_path = self.db_info["db_path"]
 
     def check_client_present(self, client_data):
         #\Input: client_data (client_ip, total_heartbeats, time)
@@ -141,17 +146,51 @@ class InputProcessor(object):
             return False
 
         
+    def _all_messages(self, db_info, db_name, db_path, db_data, incoming_data, indata_keys, sql):
+        #\Input: db_info, db_name, and sql object 
+        #\Function: Update the all messages table
+        #\Output: N/A
+
+        struct = tuple([incoming_data[key] for key in indata_keys])
+        tb_name = filter(lambda tb: tb["tb_index"] == 0, db_info["tables"])[0]["tb_name"]
+        tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
+        tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
+        log.debug("insertDB with {} {} {}".format(db_name, tb_name, tb_columns))
+        sql.insertDB(struct, db_path, tb_name, tb_columns)
+    
+    def _active_clients(self, db_info, db_name, db_path, db_data, incoming_data, sql):
+        #\Input: db_info, db_name, and sql object 
+        #\Function: Update the all clients table
+        #\Output: N/A
+
+        #Active Clients setup
+        tb_name = filter(lambda tb: tb["tb_index"] == 1, db_info["tables"])[0]["tb_name"]
+        tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
+        tb_update_mode = tb_db_data["tb_update_mode"]
+        tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
+
+        result = self.check_client_present(incoming_data)
+        if result: 
+            log.debug("IP {} found in records. Updateing table with new information".format(result))
+            struct = [(column, incoming_data[column]) for column in tb_update_mode]
+            sql.updateDB(struct, result, db_path, tb_name)
+        else:
+            log.debug("IP {} NOT found in records. Inserting as new record".format(incoming_data["client_ip"]))
+            struct = tuple([incoming_data[column] for column in tb_columns])
+            sql.insertDB(struct, db_path, tb_name, tb_columns)
+
+        #Check if there are any inactive clients
+        result = self.inactive_detection()
+        if result:
+            for client in result:
+                sql.removeDB("client_ip", (client["client_ip"], ), db_path, tb_name)
+
     def process_fifo_data(self):
         #\Input: Queue input from read_fifo function
         #\Function: Main function responsible for deciding what is to be added/removed from database\
         #           Update All_Messages & Active_Clients table
         #\Output: N/A
 
-        tb_db_map = table_config.db_tb_index_map
-        db_data = table_config.db_data
-        db_info = filter(lambda tb_db: tb_db["db_index"] == 0, tb_db_map)[0] 
-        db_name = db_info["db_name"]
-        db_path = db_info["db_path"]
         sql = table_config.sql
         while True:
             if not q.empty():
@@ -164,36 +203,15 @@ class InputProcessor(object):
                         incoming_data[key] = incoming_data[key].encode('utf-8')
                 indata_keys = incoming_data.keys()
                 
-                struct = tuple([incoming_data[key] for key in indata_keys])
-
-                #Update table which stores all incoming messages
-                tb_name = filter(lambda tb: tb["tb_index"] == 0, db_info["tables"])[0]["tb_name"]
-                tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
-                tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
-                log.debug("insertDB with {} {} {}".format(db_name, tb_name, tb_columns))
-                sql.insertDB(struct, db_path, tb_name, tb_columns)
+                message_type = incoming_data["type"]
                 
-                #Active Clients setup
-                tb_name = filter(lambda tb: tb["tb_index"] == 1, db_info["tables"])[0]["tb_name"]
-                tb_db_data = filter(lambda tb_db: tb_db["tb_name"] == tb_name and tb_db["db_name"] == db_name, db_data)[0]
-                tb_update_mode = tb_db_data["tb_update_mode"]
-                tb_columns = [column["cl_name"].encode('utf-8') for column in filter(lambda col: col["cl_parm"] != "PRIMARY KEY", tb_db_data["tb_columns"])]
+                #Update All messages table
+                self._all_messages(self.db_info, self.db_name, self.db_path, self.db_data, incoming_data, indata_keys, sql)
 
-                result = self.check_client_present(incoming_data)
-                if result: 
-                    log.debug("IP {} found in records. Updateing table with new information".format(result))
-                    struct = [(column, incoming_data[column]) for column in tb_update_mode]
-                    sql.updateDB(struct, result, db_path, tb_name)
-                else:
-                    log.debug("IP {} NOT found in records. Inserting as new record".format(incoming_data["client_ip"]))
-                    struct = tuple([incoming_data[column] for column in tb_columns])
-                    sql.insertDB(struct, db_path, tb_name, tb_columns)
-
-                #Check if there are any inactive clients
-                result = self.inactive_detection()
-                if result:
-                    for client in result:
-                        sql.removeDB("client_ip", (client["client_ip"], ), db_path, tb_name)
+                #Update Active clients table
+                if message_type == "heartbeat":
+                    self._active_clients(self.db_info, self.db_name, self.db_path, self.db_data, incoming_data, sql)
+                
             else:
                 log.warning("Queue is empty; no events to process")
             time.sleep(1)
@@ -218,6 +236,7 @@ if __name__ == '__main__':
                         help = "Enter -v for verbosity")
     args = parser.parse_args()
 
+    #Configure the logger
     log = Log(sys.argv[0], verbosity=args.verbosity).logger
     
     #Initialize and the start of the program

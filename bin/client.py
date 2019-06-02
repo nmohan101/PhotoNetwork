@@ -24,8 +24,10 @@ import os
 #---------------------------------------------------#
 #                   Local Imports                   #
 #---------------------------------------------------#
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/lib")
 import asynctimer
 import getip
+from log import Log
 
 #---------------------------------------------------#
 #                   Constants                       #
@@ -34,8 +36,7 @@ PORT_TXRX      = 5580
 LISTEN_PORT    = 5560
 MULTICAST_PORT = 5570
 MULTICAST_IP   = "224.1.1.1"
-LOG_PATH       = "/var/log/PhotoNetwork/"
-LOG = logging.getLogger(__name__)
+
     
 
 
@@ -79,12 +80,12 @@ class client_udp(object):
     def send_heartbeat(self):
         heartbeat = {"type": "heartbeat", "total_hb": cu.package_counter, "client_ip": cu.ip, "time": str(datetime.datetime.now())}
         data = json.dumps(heartbeat)
-        LOG.info("tx %s"%heartbeat)
+        log.info("tx %s"%heartbeat)
         cu.sock_txrx.sendto(data, (cu.master_ip, PORT_TXRX))
         cu.package_counter += 1
     
     def _config_multicast(self):
-        LOG.debug("Configuring multicast")
+        log.debug("Configuring multicast")
         mreq = struct.pack("4sl", socket.inet_aton(MULTICAST_IP), socket.INADDR_ANY)
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
@@ -96,7 +97,7 @@ class client_udp(object):
         try:
             proc = subprocess.Popen(self.rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             stdout, stderr = proc.communicate()
-            LOG.info(stdout)
+            log.info(stdout)
         except subprocess.CalledProcessError:
             raise
 
@@ -120,15 +121,15 @@ class controller(object):
         
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
-                LOG.info("START SENDING HEARTBEATS")
+                log.info("START SENDING HEARTBEATS")
                 heartbeat.start()
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
                 heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
                 self.heartbeat_active = False
-                LOG.warning("STATUS - LOST CONNECTION TO HOST")
+                log.warning("STATUS - LOST CONNECTION TO HOST")
                 
-        LOG.warning("SHUTDOWN EXECUTED")
+        log.warning("SHUTDOWN EXECUTED")
         heartbeat.stop() 
         host_finder.stop()
         multi_listen.stop()
@@ -143,23 +144,9 @@ if __name__=="__main__":
     parser.add_argument('-v', '--verbosity', action = "store_true",  help = "Enter -v for verbosity")
     args = parser.parse_args()
 
-    #Create and configure the logger
-    LOG.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    ch = logging.StreamHandler()  
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
-    
-    if args.verbosity:
-        print "VERBOSE MODE"
-        ch.setLevel(logging.DEBUG)
-    else:
-        ch.setLevel(logging.WARNING)
-    
-    LOG.addHandler(ch)
-    LOG.addHandler(fh)
-    
+    #Configure the logger
+    log = Log(sys.argv[0], verbosity=args.verbosity).logger
+
     #Initialize the UDP class
     cu = client_udp()
     cntrl = controller()

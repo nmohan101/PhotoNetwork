@@ -17,10 +17,14 @@ import logging
 import sys
 
 #---------------------------------------------------#
+#                   Local Imports                   #
+#---------------------------------------------------#
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/lib")
+from log import Log
+
+#---------------------------------------------------#
 #                   Constants                       #
 #---------------------------------------------------#
-LOG = logging.getLogger(__name__)
-LOG_PATH = "/var/log/PhotoNetwork/"
 CAM_SETTINGS = "/etc/PhotoNetwork/cam_settings.config"
 
 class Camera(object):
@@ -42,7 +46,7 @@ class Camera(object):
         
     def read_cam_settings(self):
         #Read and save camera settings
-        LOG.debug("Reading camera settings")
+        log.debug("Reading camera settings")
         settings_list = []
         
         with open(CAM_SETTINGS, "r") as f:
@@ -65,7 +69,7 @@ class Camera(object):
             
     def camera_settings(self):
         #Apply Camera settings 
-        LOG.debug("Applying camera settings")
+        log.debug("Applying camera settings")
         self.camera.resolution = (self.res_width, self.res_height)
         self.camera.sharpness = self.sharpness
         self.camera.contrast = self.contrast
@@ -83,7 +87,7 @@ class Camera(object):
             time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S"))
             self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))
             
-            LOG.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
+            log.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
 
 if __name__=="__main__":
     
@@ -94,23 +98,9 @@ if __name__=="__main__":
     args = parser.parse_args()
     captures = args.capture
     
-    #Create and configure the LOGGER
-    LOG.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    ch = logging.StreamHandler(sys.stdout)
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
+    #Configure the logger
+    log = Log(sys.argv[0], verbosity=args.verbosity).logger
 
-    if args.verbosity:
-        print "VERBOSE MODE"
-        ch.setLevel(logging.DEBUG)
-    else:
-        ch.setLevel(logging.WARNING)
-    
-    LOG.addHandler(ch)
-    LOG.addHandler(fh)
-        
     #Initialize the camera object
     c = Camera()
     
