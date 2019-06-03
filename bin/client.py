@@ -90,9 +90,9 @@ class client_udp(object):
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
     def multi_listen(self):
-        LOG.debug("Listening for multi-cast message from Host")
+        log.debug("Listening for multi-cast message from Host")
         self.rx_data = eval(self.sock_multi.recv(10240))
-        LOG.info("Action message rx from host - {}".format(self.rx_data))
+        log.info("Action message rx from host - {}".format(self.rx_data))
 
             try:
                 proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
