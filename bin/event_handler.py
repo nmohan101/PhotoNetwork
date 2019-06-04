@@ -20,7 +20,6 @@ import sys
 import json
 import pwd
 import argparse
-import logging
 import datetime as dt
 
 #---------------------------------------------------#

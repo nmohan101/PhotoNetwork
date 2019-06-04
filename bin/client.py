@@ -16,7 +16,6 @@ import datetime
 import json
 import struct
 import sys
-import logging
 import argparse
 import subprocess
 import os
@@ -50,6 +49,7 @@ class client_udp(object):
         self.sock_txrx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_multi = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock_multi.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock_multi.settimeout(2)                        #Set the socket timeout to 2 seconds 
         self.sock_multi.bind((MULTICAST_IP, MULTICAST_PORT))
         self.master_hostname = ""
         self.master_ip = ""
@@ -70,9 +70,9 @@ class client_udp(object):
                 self.host_status = True
                 self.master_hostname = message["hostname"]
                 self.master_ip = addr[0]
-                LOG.info("rx %s"%data)
+                log.info("rx %s"%data)
         except socket.timeout:
-            LOG.warning("STATUS - MASTER NOT FOUND")
+            log.warning("STATUS - MASTER NOT FOUND")
             self.master_hostname = ""
             self.master_ip = ""
             self.host_status = False
@@ -90,17 +90,14 @@ class client_udp(object):
         self.sock_multi.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
     def multi_listen(self):
-        log.debug("Listening for multi-cast message from Host")
-        self.rx_data = eval(self.sock_multi.recv(10240))
+        self.rx_data = self.sock_multi.recv(10240).split()
         log.info("Action message rx from host - {}".format(self.rx_data))
 
-            try:
-                proc = subprocess.Popen(rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-                stdout, stderr = proc.communicate()
-                log.info(stdout)
-            except subprocess.CalledProcessError:
-                log.error("Unable to execute command %s"%rx_data)
-                raise
+        try:
+            proc = subprocess.Popen(self.rx_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        except subprocess.CalledProcessError:
+            log.error("Unable to execute command %s"%self.rx_data)
+            raise
 
 
 class controller(object):
@@ -114,19 +111,21 @@ class controller(object):
         self.sys_exit = True
 
     def status_controller(self):
-        host_finder = asynctimer.AsyncTimer(1, cu.find_host)
-        multi_listen = asynctimer.AsyncTimer(0.1, cu.multi_listen)
+        host_finder = asynctimer.AsyncTimer(20, cu.find_host)
+        multi_listen = asynctimer.AsyncTimer(3, cu.multi_listen)
         heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         host_finder.start()
-        multi_listen.start()
         
         while self.sys_exit == False:
             if cu.host_status == True and self.heartbeat_active == False:
-                log.info("START SENDING HEARTBEATS")
+                log.info("STATUS - Master found start sending heartbeats")
+                log.info("STATUS - Master found listen for multi-cast message")
                 heartbeat.start()
+                multi_listen.start()
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
                 heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
+                multi_listen.stop()                                    #Stop listening for multi-cast message as host not active
                 self.heartbeat_active = False
                 log.warning("STATUS - LOST CONNECTION TO HOST")
                 

@@ -19,7 +19,7 @@ __copyright__   = "Copy Right 2018. NM Technologies"
 /                   Constants                       /
 /--------------------------------------------------*/
 #define DEFAULT_CAPTURES "1"
-#define FIFO_WRITE_MESSAGE "python capture.pyc -c"
+#define FIFO_WRITE_MESSAGE "python /opt/PhotoNetwork/bin/capture.py -c"
 #define FIFO_PATH "/var/run/user/"
 #define FIFO_FILE "multi.fifo"
 

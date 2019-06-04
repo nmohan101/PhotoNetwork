@@ -13,7 +13,6 @@ __copyright__   = "Copy Right 2018. NM Technologies"
 from picamera import PiCamera
 import datetime
 import argparse
-import logging
 import sys
 import os
 
@@ -85,8 +84,9 @@ class Camera(object):
         
         #Capture an image and store it in specified location
         for c in range(0, captures):
-            time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H_%M_%S"))
-            self.camera.capture("{}/image_{}.jpg".format(self.capture_path, time_stamp))
+            log.debug("Taking Capture %d of %d"%(c, captures))
+            time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H%M%S"))
+            self.camera.capture("{}/image{}-{}.jpg".format(self.capture_path, c,  time_stamp))
             
             log.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
 

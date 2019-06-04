@@ -14,16 +14,17 @@ import unittest
 import datetime
 import sys
 import os
-import logging
 import pwd
 #---------------------------------------------------#
 #                   Local Imports                   #
 #---------------------------------------------------#
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/Application")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/bin")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/lib")
 import server
 import client
 import getip
 import socket
+import log
 
 class TestServerClient(unittest.TestCase):
 
@@ -93,7 +94,7 @@ class TestServerClient(unittest.TestCase):
         clnt = client.client_udp()
 
         #Send test message via multicast
-        message = ["echo", "Test", "Message"]
+        message = "echo Testing Multicast"
         srv.multicast(str(message))
 
         #Recivie multi-cast message

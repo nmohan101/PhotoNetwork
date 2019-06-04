@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""log.py: This library faciliates the logging throughput the application. 
+"""log.py: This library faciliates the logging throughout the application. 
 
 __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technologies"

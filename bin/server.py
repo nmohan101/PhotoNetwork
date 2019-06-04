@@ -93,6 +93,7 @@ class FIFO(object):
             log.debug("No multi_fifo file found at: %s"%MULTI_FIFO)
 
     def write(self, data):
+        log.debug("Writing fifo data")
         fifo = open(SERVER_FIFO, "w")
         fifo.write(data)
         fifo.close()
@@ -117,8 +118,15 @@ class server(object):
                 command = None
             time.sleep(0.5)
 
-    def main(self,listen):
-        listen.settimeout(20)
+    def main(self, listen):
+        #\Input: Socket object to listen
+        #\Function: Bind to the listen port and listen for messages sent from the client.
+        #           A warning is logged if no message is recived for 60 seconds. 
+        #\Output: Once message is recieved call the fifo.write function to write message
+
+        #@ToDo: In the future this method needs to be moved to the UDP class and main should just call it. 
+
+        listen.settimeout(60)
         listen.bind(("", LISTEN_PORT))
 
         while not self.sys_exit:
