@@ -49,7 +49,7 @@ class client_udp(object):
         self.sock_txrx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_multi = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.sock_multi.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock_multi.settimeout(2)                        #Set the socket timeout to 2 seconds 
+        self.sock_txrx.settimeout(0.0)                        #Set socket to non-blocknig. 
         self.sock_multi.bind((MULTICAST_IP, MULTICAST_PORT))
         self.master_hostname = ""
         self.master_ip = ""
@@ -109,10 +109,11 @@ class controller(object):
     def exits(self):
         inp = raw_input("PRESS ANY KEY TO EXIT\n")
         self.sys_exit = True
+    
 
     def status_controller(self):
         host_finder = asynctimer.AsyncTimer(20, cu.find_host)
-        multi_listen = asynctimer.AsyncTimer(3, cu.multi_listen)
+        multi_listen = asynctimer.AsyncTimer(0.5, cu.multi_listen)
         heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         host_finder.start()
         
