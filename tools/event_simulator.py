@@ -20,12 +20,19 @@ import time
 import sys
 import pwd
 
+
+#---------------------------------------------------#
+#                   Local Imports                   #
+#---------------------------------------------------#
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)) + "/lib")
+import asynctimer
+from log import Log
+
 #---------------------------------------------------#
 #                   Constants                       #
 #---------------------------------------------------#
 IP_ADDRESS = "192.168.0"
 IP_LIST = {}
-LOG_PATH = "/var/log/PhotoNetwork/"
 UID = pwd.getpwuid(os.getuid()).pw_uid
 SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 
@@ -35,7 +42,7 @@ SERVER_FIFO = "/var/run/user/%s/server_rx.fifo"%UID
 #---------------------------------------------------#
 def run(upper_value):
     while True:
-        logger.debug("Executing simulation")
+        log.debug("Executing simulation")
         net_value = random.randint(0, upper_value)
         ip_address = "%s.%d"%(IP_ADDRESS, net_value)
 
@@ -46,7 +53,7 @@ def run(upper_value):
         IP_LIST[ip_address] += 1
         data = json.dumps(heartbeat)
         fi.write(data)
-        logger.debug(heartbeat)
+        log.debug(heartbeat)
         time.sleep(1)
 
 class FIFO(object):
@@ -67,23 +74,9 @@ if __name__=="__main__":
     parser.add_argument('-r', '--random', default = 10, required = False, help = 'Enter the number of unique ips to be broadcasted') 
     args = parser.parse_args()
     
-    #Create and configure the logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    ch = logging.StreamHandler()
-    fh = logging.FileHandler("%s%s.log"%(LOG_PATH, sys.argv[0].split("/")[-1].split(".")[0]))
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
-    
-    if args.verbosity:
-        print "VERBOSE MODE"
-        ch.setLevel(logging.DEBUG)
-    else:
-        ch.setLevel(logging.WARNING)
-    
-    logger.addHandler(ch)
-    logger.addHandler(fh)
+    #Configure the logger
+    log = Log(sys.argv[0], verbosity=args.verbosity).logger
+
     fi = FIFO()
     run(int(args.random))
 
