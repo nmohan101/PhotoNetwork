@@ -4,6 +4,7 @@
     "sim_mode"    : false,
     "test_path"   : "/opt/PhotoNetwork/test/",
     "app_path"    : "/opt/PhotoNetwork/bin/",
-    "apps"        : ["server", "client", "event_handler"],
+    "server_apps" : ["server", "event_handler"],
+    "client_apps" : ["client"],
     "py_ext"      : "py"
 }
