@@ -212,7 +212,7 @@ class InputProcessor(object):
                     self._active_clients(self.db_info, self.db_name, self.db_path, self.db_data, incoming_data, sql)
                 
             else:
-                log.warning("Queue is empty; no events to process")
+                log.debug("Queue is empty; no events to process")
             time.sleep(1)
 
 def read_fifo():
@@ -252,9 +252,9 @@ if __name__ == '__main__':
         time.sleep(1)
     rfifo.start()
     pfifo.start()
-    
-    if raw_input("PRESS ANY KEY TO EXIT\n"):
-        sys.exit()
 
+    #Ensure program doesnt terminate
+    rfifo.join()
+    pfifo.join()
     
-
+    

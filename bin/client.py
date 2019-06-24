@@ -104,12 +104,6 @@ class controller(object):
     
     def __init__(self):
         self.heartbeat_active = False
-        self.sys_exit = False
-
-    def exits(self):
-        inp = raw_input("PRESS ANY KEY TO EXIT\n")
-        self.sys_exit = True
-    
 
     def status_controller(self):
         host_finder = asynctimer.AsyncTimer(20, cu.find_host)
@@ -117,7 +111,7 @@ class controller(object):
         heartbeat = asynctimer.AsyncTimer(10, cu.send_heartbeat)
         host_finder.start()
         
-        while self.sys_exit == False:
+        while True:
             if cu.host_status == True and self.heartbeat_active == False:
                 log.info("STATUS - Master found start sending heartbeats")
                 log.info("STATUS - Master found listen for multi-cast message")
@@ -151,9 +145,6 @@ if __name__=="__main__":
     #Initialize the UDP class
     cu = client_udp()
     cntrl = controller()
-    et = Thread(target=cntrl.exits)
-    et.daemon = True 
-    et.start()
 
     #Call status controller
     cntrl.status_controller()

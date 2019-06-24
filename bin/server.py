@@ -100,17 +100,10 @@ class FIFO(object):
 
 class server(object):
     def __init__(self):
-        self.sys_exit = False
-
-    def exits(self):
-        while not self.sys_exit:
-            inp = raw_input("Enter exit to close the application \n")
-            if inp == 'exit':
-                self.sys_exit = True
-            time.sleep(1)
+        pass
 
     def wait_for_multi(self):
-        while not self.sys_exit:
+        while True:
             command = fifo.read()
             if command:
                 log.debug("Command rx - Sending to Clients {}".format(command))
@@ -129,7 +122,7 @@ class server(object):
         listen.settimeout(60)
         listen.bind(("", LISTEN_PORT))
 
-        while not self.sys_exit:
+        while True:
             try:
                 data, port = listen.recvfrom(1024)
                 log.info("rx %s"%(json.loads(data)))
@@ -157,11 +150,8 @@ if __name__== "__main__":
     fifo = FIFO()
     brdcast = asynctimer.AsyncTimer(10, u.broadcast)
     brdcast.start()
-    et = Thread(target=mn.exits)
     wt = Thread(target=mn.wait_for_multi)
-    et.daemon = True 
     wt.daemon = True
-    et.start()
     wt.start()
     mn.main(u.sock_l)
 

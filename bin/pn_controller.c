@@ -1,5 +1,4 @@
-/* pn_controller.c: The main process responsible for controlling all the
-                    PhotoNetwork system processes
+/* pn_controller.c: This application is used to start and stop the PhotoNetwork. 
 __author__      = "Nitin Mohan
 __copyright__   = "Copy Right 2018. NM Technologies"
 */
@@ -134,7 +133,6 @@ static void parse_json(char *file_content, struct network_settings *object_p)
         {
             app = json_object_array_get_idx(jobj_server_apps, index);
             strcpy(object_p->apps[index], json_object_get_string(app));
-
         }
     }
 
@@ -147,7 +145,6 @@ static void parse_json(char *file_content, struct network_settings *object_p)
         {
             app = json_object_array_get_idx(jobj_client_apps, index);
             strcpy(object_p->apps[index], json_object_get_string(app));
-
         }
     }
     else
@@ -163,12 +160,14 @@ static void start_pn(struct network_settings *object_p)
     //Output    : N/A
     //Function  : Start all PhotoNetwork Processes
 
-    char app[100];
+    char *app;
+    size_t path_size;
 
     for (int i = 0; i < object_p->n_of_apps; i++)
     {
-
-        sprintf(app, "python %s%s.%s", object_p->app_path, object_p->apps[i], object_p->py_ext);
+        path_size = sizeof(object_p->app_path) + sizeof(object_p->py_ext) + sizeof(object_p->apps[i]);
+        app = malloc(path_size);
+        sprintf(app, "python %s%s.%s &", object_p->app_path, object_p->apps[i], object_p->py_ext);
         printf("Starting Application ....... %s\n", app);
         system(app);
     }
