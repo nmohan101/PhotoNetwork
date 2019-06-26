@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
                     stop_pn();
                     break;
                 case 'h':
-                    printf("Help Menu\n");
+                    printf("Help Menu:\n");
                     print_usage(0);
                     break;
                 case '?':
@@ -72,7 +72,7 @@ static void read_file(char *filepath, char *file_content)
     //Function  : Read file and populate file_content with contents
 
     FILE *fp;
-    char c; 
+    int c; 
     int index = 0;
     
     fp = fopen(filepath, "r");

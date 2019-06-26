@@ -8,7 +8,7 @@ OBJ_DIR		= Obj
 INC_DIR		= inc
 LIB_DIR		= lib
 OUT_DIR		= /opt/PhotoNetwork/bin
-CFLAGS 		= -g -Wall -I $(INC_DIR)
+CFLAGS 		= -g -Wall -Wextra -I $(INC_DIR)
 
 output: $(OBJ_DIR)/pn_controller.o $(OBJ_DIR)/srv_capture.o
 		gcc $(OBJ_DIR)/pn_controller.o -ljson-c -o $(OUT_DIR)/photonetwork
