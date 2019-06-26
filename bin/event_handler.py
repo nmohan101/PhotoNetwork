@@ -213,9 +213,9 @@ class InputProcessor(object):
                     self._active_clients(self.db_info, self.db_name, self.db_path, self.db_data, incoming_data, sql)
                 
             else:
-            if counter > 30:
-                log.warning("Queue is empty; no events to process")
-                counter = 0
+                if counter > 30:
+                    log.warning("Queue is empty; no events to process")
+                    counter = 0
             time.sleep(1)
 
 def read_fifo():

@@ -27,7 +27,8 @@ class Log(object):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.filename = "%s.log"%filename.split("/")[-1].split(".")[0]
-        formatter = logging.Formatter('%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(asctime)s - %(filename)s  - %(funcName)s - %(levelname)s - %(message)s",
+                                      "%Y-%m-%d %H:%M:%S")
         ch = logging.StreamHandler(stream=sys.stdout)
         fh = logging.FileHandler("%s%s"%(LOG_PATH, self.filename))
         ch.setFormatter(formatter)
