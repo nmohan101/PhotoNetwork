@@ -1,7 +1,10 @@
 {
-    "_comment": "This file contains all the configuration for the photo network program",
-    "Network_Mode":"server",
-    "Sim_Mode":false,
-    "test_path":"/opt/PhotoNetwork/test/",
-    "app_path" :"/opt/PhotoNetwork/Application/"
+    "_comment"    : "This file contains all the configuration for the photo network program",
+    "network_mode": "server",
+    "sim_mode"    : false,
+    "test_path"   : "/opt/PhotoNetwork/test/",
+    "app_path"    : "/opt/PhotoNetwork/bin/",
+    "server_apps" : ["server", "event_handler"],
+    "client_apps" : ["client"],
+    "py_ext"      : "py"
 }

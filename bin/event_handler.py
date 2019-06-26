@@ -191,6 +191,7 @@ class InputProcessor(object):
         #\Output: N/A
 
         sql = table_config.sql
+        counter = 0
         while True:
             if not q.empty():
                 incoming_data = json.loads(q.get())
@@ -212,7 +213,9 @@ class InputProcessor(object):
                     self._active_clients(self.db_info, self.db_name, self.db_path, self.db_data, incoming_data, sql)
                 
             else:
+            if counter > 30:
                 log.warning("Queue is empty; no events to process")
+                counter = 0
             time.sleep(1)
 
 def read_fifo():
@@ -252,9 +255,9 @@ if __name__ == '__main__':
         time.sleep(1)
     rfifo.start()
     pfifo.start()
-    
-    if raw_input("PRESS ANY KEY TO EXIT\n"):
-        sys.exit()
 
+    #Ensure program doesnt terminate
+    rfifo.join()
+    pfifo.join()
     
-
+    

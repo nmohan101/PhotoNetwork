@@ -102,7 +102,7 @@ mkdir_photo (){
 
 settings () {
     echo "Updating system mode to: $MODE"
-    sed -i -e "s/"\"Network_Mode"\":.*/"\"Network_Mode"\":"\"$MODE"\",/g" $DEST_CONFIG_PATH/network_settings.json
+    sed -i -e "s/"\"network_mode"\":.*/"\"network_mode"\":"\"$MODE"\",/g" $DEST_CONFIG_PATH/network_settings.json
 }
 
 #Copy/Update bin Files
