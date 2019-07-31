@@ -1,0 +1,45 @@
+
+<!-- 
+
+template.html: This mark-up page is responsibe for the in browser layout of the web app.
+
+__author__      = "Tony Egizii"
+__copyright__   = "Copy Right 2019. Rodaledi Inc"
+
+-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+      <script src="{{url_for('static', filename='search.js')}}"></script>
+	<meta charset="utf-8">
+	<title>example</title>
+  </head>
+  <body>
+      <input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for names..">
+      <input type="button" id="capture" onClick="myCapture()" value="Capture">
+      <input type="text" id="myInput" placeholder="Capture amount">
+      <table class="hoverTable" id="hoverTable">
+        {# comment #}
+        <tr>
+          <th>ID</th>
+          <th>Client IP</th>
+          <th>Total HB</th>
+          <th>Time</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+          <td>ID{{user.user_id}}</td>
+          <td>{{user.client_ip}}</td>
+          <td>{{user.total_hb}}</td>
+          <td>{{user.time}}</td>
+        </tr>
+        {% endfor %}
+      </table>
+	  </body>
+
+  </html>
+
+
