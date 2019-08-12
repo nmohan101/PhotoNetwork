@@ -13,16 +13,25 @@ __copyright__   = "Copy Right 2019. Rodaledi Inc"
 <html lang="en">
   <head>
       <link rel="stylesheet"  type="text/css" href="style.css">
+      
       <script src="search.js"></script>
 	<meta charset="utf-8">
 	<title>example</title>
   </head>
   <body>
       <input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for names..">
-      <input type="button" id="capture" onClick="myCapture()" value="Capture">
-      <input type="text" id="myInput" placeholder="Capture amount">
+      
+      <form id="capture" method="POST" action="/assets">
+
+	<input type="submit" value="Capture">
+	<input type="text" name="capAmount" placeholder="Capture amount">
+
+
+      </form>
+      
+      
       <table class="hoverTable" id="hoverTable">
-        
+       <div class="tHead"> 
         <tr>
           <th>ID </th>
           <th>Client IP</th>
@@ -30,6 +39,7 @@ __copyright__   = "Copy Right 2019. Rodaledi Inc"
           <th>Time</th>
         </tr>
         <% dbData.forEach((line) => {%>
+	</div>
 	
         <tr>
           <td><%= line.id %></td>
