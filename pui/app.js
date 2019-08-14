@@ -59,7 +59,7 @@ app.get('/', (req, res) =>{
 
 app.post('/assets',urlencodedParser, (req, res) =>{
 	shell.exec('./assets/ctest1');
-    	console.log(req.body);
+    	console.log(req.body.capAmount);
     	res.render('index',{dbData});
 
 
