@@ -15,6 +15,7 @@ import datetime
 import argparse
 import sys
 import os
+import socket
 
 #---------------------------------------------------#
 #                   Local Imports                   #
@@ -80,15 +81,17 @@ class Camera(object):
         self.camera.flash_mode = self.flash
         
 
-    def capture(self, captures):
+    def capture(self, captures, hostname):
         
         #Capture an image and store it in specified location
         for c in range(0, captures):
             log.debug("Taking Capture %d of %d"%(c, captures))
             time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H%M%S"))
-            self.camera.capture("{}/image{}-{}.jpg".format(self.capture_path, c,  time_stamp))
+            image_name = "{}/photonetwork_{}_{}-{}.jpg".format(self.capture_path, hostname,
+                                                               c,  time_stamp)
+            self.camera.capture(image_name)
             
-            log.info("Imaged saved to: %s/%s"%(self.capture_path, time_stamp))
+            log.info("Imaged saved to: %s/%s"%(self.capture_path, image_name))
 
 if __name__=="__main__":
     
@@ -111,6 +114,9 @@ if __name__=="__main__":
     #Apply camera settings to the camera
     c.camera_settings()
     
+    #Get Hostname
+    hostname = str(socket.gethostname())
+
     #Send command to capture
-    c.capture(captures)
+    c.capture(captures, hostname)
     

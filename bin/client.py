@@ -13,6 +13,7 @@ __copyright__   = "Copy Right 2018. NM Technlogies"
 import socket
 from threading import Thread
 import datetime
+import time
 import json
 import struct
 import sys
@@ -112,6 +113,7 @@ class controller(object):
         host_finder.start()
         
         while True:
+            time.sleep(0.1)
             if cu.host_status == True and self.heartbeat_active == False:
                 log.info("STATUS - Master found start sending heartbeats")
                 log.info("STATUS - Master found listen for multi-cast message")
@@ -120,14 +122,14 @@ class controller(object):
                 self.heartbeat_active = True
             elif (cu.host_status == False and self.heartbeat_active == True):
                 heartbeat.stop()                                       #Stop sending heartbeats as the host is no longer active
-                multi_listen.stop()                                    #Stop listening for multi-cast message as host not active
+                #multi_listen.stop()                                    #Stop listening for multi-cast message as host not active
                 self.heartbeat_active = False
                 log.warning("STATUS - LOST CONNECTION TO HOST")
                 
         log.warning("SHUTDOWN EXECUTED")
         heartbeat.stop() 
         host_finder.stop()
-        multi_listen.stop()
+        #multi_listen.stop()
         cu.sock_rx.close()
         cu.sock_txrx.close()
         cu.sock_multi.close()
