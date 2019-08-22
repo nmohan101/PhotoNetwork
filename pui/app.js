@@ -55,7 +55,7 @@ app.post('/assets',urlencodedParser, (req, res) =>{
     var no_of_captures = parseInt(req.body.capAmount, 10);
 
     //Proceed only if we recived a valid number of captures
-    if (isNaN(no_of_captures) || no_of_captures > 100)
+    if (isNaN(no_of_captures) || no_of_captures < 1 || no_of_captures > 100)
     {
         console.log("Invalid number of captures entered. Minimum is 1 and Maximum is 100");
     }
