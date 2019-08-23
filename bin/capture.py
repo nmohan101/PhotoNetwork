@@ -85,11 +85,11 @@ class Camera(object):
         
         #Capture an image and store it in specified location
         for c in range(0, captures):
-            log.debug("Taking Capture %d of %d"%(c, captures))
-            time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H%M%S"))
+            log.debug("Taking Capture %d of %d"%(c+1, captures))
+            time_stamp = str(datetime.datetime.now().strftime("%y-%m-%d_%H%M%S%f"))
             image_name = "{}/photonetwork_{}_{}-{}.jpg".format(self.capture_path, hostname,
                                                                c,  time_stamp)
-            self.camera.capture(image_name)
+            self.camera.capture(image_name, use_video_port=True)
             
             log.info("Imaged saved to: %s/%s"%(self.capture_path, image_name))
 
