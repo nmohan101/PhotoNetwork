@@ -1,7 +1,7 @@
-
+/pui/node_modules/
 *.pyc
 *.log
-Application/event_handler
 *.db
 /.metadata/
 *.swp
+Obj

@@ -1,7 +1,0 @@
-{
-    "_comment": "This file contains all the configuration for the photo network program",
-    "Network_Mode":"server",
-    "Sim_Mode":false,
-    "test_path":"/opt/PhotoNetwork/test/",
-    "app_path" :"/opt/PhotoNetwork/Application/"
-}

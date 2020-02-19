@@ -1,0 +1,61 @@
+/* style.css: This style sheet holds all the class and id styling data for the web app.
+ 
+__author__      = "Tony Egizii"
+__copyright__   = "Copy Right 2019. Rodaledi Inc"
+*/
+
+body {
+background-color: #b4def2;
+}
+
+h1 {
+font-family:'sans-serif';
+text-align: center;
+}
+
+.wrapper {
+background-color: grey;
+padding:20px;
+border-radius:25px;
+font-family:'sans-serif';
+}
+
+.hoverTable{
+  width:100%; 
+  border-collapse:separate;
+  border-spacing: 0;
+  border-radius:25px;
+  -moz-border-radius:25px;
+  overflow: hidden;
+  /*margin:7px;*/
+}
+
+
+.hoverTable td, th{ 
+  padding:7px; 
+  border-bottom:#4e95f4 1px solid;
+}
+/* Define the default color for all the table rows */
+.hoverTable tr{
+  background: #73c2e7;
+  text-align: center;
+  
+}
+
+.hoverTable tr:nth-child(odd) {
+  background-color: #b4def2;
+}
+
+/* Define the hover highlight color for the table row */
+.hoverTable tr:hover {
+    background-color: #dc9432;
+}
+
+.myInput {
+  
+  width: 100%; /* Full-width */
+  font-size: 16px; /* Increase font-size */
+  padding: 12px 0 12px 0; /* Add some padding */
+  border: 1px solid #ddd; /* Add a grey border */
+  margin: 12px 0 12px 0; /* Add some space below the input */
+}
